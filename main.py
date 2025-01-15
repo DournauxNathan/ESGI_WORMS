@@ -1,5 +1,6 @@
 import pygame
-from terrain import generate_terrain, draw_terrain
+import random
+from terrain import generate_terrain, draw_terrain, create_crater
 
 # Initialisation de Pygame
 pygame.init()
@@ -20,14 +21,21 @@ def main():
     """
     clock = pygame.time.Clock()  # Horloge pour limiter les FPS
 
-    # Génère un terrain
-    terrain = generate_terrain(WIDTH, HEIGHT, 100, 300, 10)
+    # Génère un terrain initial
+    terrain = generate_terrain(WIDTH, HEIGHT, 100, 300, 8)
 
     running = True  # Variable pour maintenir la boucle du jeu
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:  # Vérifie si l'utilisateur ferme la fenêtre
                 running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F5:  # Régénère le terrain
+                    terrain = generate_terrain(WIDTH, HEIGHT, 100, 300, 8)
+                elif event.key == pygame.K_F4:  # Crée un trou aléatoire
+                    explosion_x = random.randint(0, WIDTH - 1)  # Position X aléatoire
+                    explosion_radius = random.randint(20, 50)  # Taille aléatoire du trou
+                    terrain = create_crater(terrain, explosion_x, explosion_radius)
 
         # Efface l'écran en remplissant avec la couleur du ciel
         screen.fill(SKY_BLUE)
