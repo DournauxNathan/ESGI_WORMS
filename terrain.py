@@ -27,7 +27,7 @@ def draw_terrain(screen, terrain, height):
 
 def create_crater(terrain, explosion_x, radius):
     """
-    Modifie le terrain pour ajouter un trou à une position donnée.
+    Modifie le terrain pour ajouter un trou avec des bords adoucis à une position donnée.
     
     Args:
         terrain (list): Liste représentant les hauteurs du terrain.
@@ -35,13 +35,19 @@ def create_crater(terrain, explosion_x, radius):
         radius (int): Rayon de l'explosion.
 
     Returns:
-        list: Terrain modifié avec un trou.
+        list: Terrain modifié avec un trou adouci.
     """
     # Parcourt les indices dans une plage limitée par la taille de la liste
     for x in range(max(0, explosion_x - radius), min(len(terrain), explosion_x + radius + 1)):
         distance = abs(x - explosion_x)  # Distance entre x et le centre de l'explosion
         if distance < radius:
-            depth = (radius - distance) ** 2 // radius  # Profondeur calculée
-            terrain[x] = max(0, terrain[x] - depth)  # Diminue la hauteur du terrain sans aller sous 0
+            # Calcule une réduction progressive de la hauteur selon un dégradé circulaire
+            depth = int((radius - distance) ** 2 / radius)
+            terrain[x] = max(0, terrain[x] - depth)  # Diminue la hauteur sans aller sous 0
+
+            # Ajoute une légère pente autour du bord pour lisser la transition
+            smoothing_factor = radius - distance
+            if smoothing_factor < radius // 3:
+                terrain[x] += smoothing_factor // 2  # Adoucit la pente
     return terrain
 
