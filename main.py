@@ -8,18 +8,18 @@ pygame.init()
 
 # Paramètres du terrain (adaptables)
 WIDTH, HEIGHT = 1080, 720
-MIN_HEIGHT = 310    # Hauteur minimale (niveau de l'eau)
-MAX_HEIGHT = 480    # Hauteur maximale (au centre de l'île)
-VARIATION = 15      # Variation aléatoire
+MIN_HEIGHT = 310  # Hauteur minimale (niveau de l'eau)
+MAX_HEIGHT = 480  # Hauteur maximale (au centre de l'île)
+VARIATION = 15  # Variation aléatoire
 
 # Couleurs
 SKY_BLUE = (135, 206, 235)
 
 # Liste des couleurs disponibles pour les joueurs (ajoutez autant de couleurs que nécessaire)
 PLAYER_COLORS = [
-    (0, 0, 255),    # Bleu pour le Joueur 1
-    (255, 0, 0),    # Rouge pour le Joueur 2
-    (0, 255, 0),    # Vert pour le Joueur 3
+    (0, 0, 255),  # Bleu pour le Joueur 1
+    (255, 0, 0),  # Rouge pour le Joueur 2
+    (0, 255, 0),  # Vert pour le Joueur 3
     (255, 255, 0),  # Jaune pour le Joueur 4
     (255, 165, 0),  # Orange pour le Joueur 5
     (128, 0, 128),  # Violet pour le Joueur 6
@@ -32,11 +32,12 @@ pygame.display.set_caption("Worms Game")
 # Police pour afficher le texte
 font = pygame.font.SysFont("Arial", 24)
 
+
 def ask_number_of_players():
     running = True
     input_text = ""
     color = (0, 0, 0)
-    
+
     while running:
         screen.fill(SKY_BLUE)
         # Afficher le texte demandant le nombre de joueurs
@@ -74,10 +75,11 @@ def ask_number_of_players():
                     input_text += "5"
                 elif event.key == pygame.K_6:
                     input_text += "6"
-        
+
         pygame.display.flip()
 
     return 1  # Retourne un joueur si on quitte la fenêtre
+
 
 # Demander le nombre de joueurs avant de commencer
 NUM_PLAYERS = ask_number_of_players()
@@ -85,17 +87,30 @@ NUM_PLAYERS = ask_number_of_players()
 # Initialisation du terrain
 terrain = generate_island(WIDTH, HEIGHT, MIN_HEIGHT, MAX_HEIGHT, VARIATION)
 
-# Placement dynamique des personnages et attribution de couleurs en fonction du nombre de joueurs
-players = []
-for i in range(NUM_PLAYERS):
-    spawn_x = 50 + (i * (WIDTH - 100) // NUM_PLAYERS)  # Position X en fonction du joueur
-    player_color = PLAYER_COLORS[i % len(PLAYER_COLORS)]  # Choisir la couleur du joueur
-    players.append([Character(spawn_x, 100, player_color)])
-
 # Initialisation des variables de jeu
 current_player = 0  # Le joueur actuellement en train de jouer
 turn_time_limit = 30  # Durée du tour en secondes
 turn_start_time = pygame.time.get_ticks()  # Le temps du début du tour
+
+# Initialisation des personnages et de leurs couleurs
+players = []
+for i in range(NUM_PLAYERS):
+    spawn_x = 50 + (i * (WIDTH - 100) // NUM_PLAYERS)
+    player_color = PLAYER_COLORS[i % len(PLAYER_COLORS)]
+
+    print(f"Création du joueur {i + 1} à la position {spawn_x}, couleur {player_color}")
+
+    try:
+        # Vérification de la création du personnage avec les paramètres passés
+        new_player = Character(spawn_x, 100, player_color, i + 1)
+        print(f"Joueur {i + 1} créé avec succès")
+        players.append([new_player])  # Ajouter le joueur à la liste
+    except Exception as e:
+        print(f"Erreur lors de la création du joueur {i + 1}: {e}")
+        running = False  # Arrêter la boucle en cas d'erreur
+
+# Si on arrive ici, on peut vérifier la structure de players pour chaque joueur
+print(f"Liste des joueurs : {players}")
 
 # Boucle principale du jeu
 running = True
@@ -104,13 +119,15 @@ clock = pygame.time.Clock()
 while running:
     screen.fill(SKY_BLUE)
     draw_terrain(screen, terrain, HEIGHT)
-    
+
     # Affichage et mise à jour des personnages
     for player_index in range(NUM_PLAYERS):
         for character_index in range(1):  # Un personnage par joueur
             current_character_obj = players[player_index][character_index]
-            current_character_obj.apply_gravity(terrain)  # Le personnage utilise le terrain
-            current_character_obj.draw(screen)
+            current_character_obj.apply_gravity(terrain)  # Le personnage utilise la gravité
+            current_character_obj.draw(screen)  # Dessiner le personnage
+            current_character_obj.draw_health_bar(screen)  # Dessiner la barre de vie
+            current_character_obj.draw_player_name(screen)  # Afficher le nom du joueur
 
     # Affichage du temps restant pour le tour actuel
     elapsed_time = (pygame.time.get_ticks() - turn_start_time) // 1000
@@ -125,22 +142,19 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_UP:
                 players[current_player][0].jump()  # Saut pour le joueur actuel
-            
-            elif event.key == pygame.K_RETURN: # Passe au tour suivant
-            
+            elif event.key == pygame.K_RETURN:  # Passe au tour suivant
                 current_player = (current_player + 1) % NUM_PLAYERS
                 turn_start_time = pygame.time.get_ticks()  # Redémarre le chronomètre du tour
-            
-            elif event.key == pygame.K_SPACE: # Création d'un cratère
-                pass #create_crater(terrain, 50, 25)
+            elif event.key == pygame.K_SPACE:  # Création d'un cratère
+                pass  # create_crater(terrain, 50, 25)
 
     # Vérification des touches pour mouvement horizontal - pour le joueur actuel seulement
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
-        if players[current_player][0].x > 0:  # Vérifie si le personnage ne sort pas de l'écran à gauche
+        if players[current_player][0].x > 0:
             players[current_player][0].move(-1, terrain, WIDTH)
     if keys[pygame.K_RIGHT]:
-        if players[current_player][0].x < WIDTH - 1:  # Vérifie si le personnage ne sort pas de l'écran à droite
+        if players[current_player][0].x < WIDTH - 1:
             players[current_player][0].move(1, terrain, WIDTH)
 
     # Si le temps du tour est écoulé, on passe au joueur suivant
@@ -151,4 +165,4 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 
-pygame.quit(self)
+pygame.quit()
