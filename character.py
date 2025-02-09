@@ -34,12 +34,19 @@ class Character:
                     self.y = new_y
 
     def move(self, direction, terrain, WIDTH):
-        new_x = self.x + direction + 5
+        new_x = self.x + direction  # Incrémentation du mouvement horizontal
 
+        # Vérification que le personnage ne dépasse pas les bords de l'écran
         if 0 <= new_x < WIDTH:  # Limite du terrain
             self.x = new_x
-            terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
-            self.y = terrain_height - self.radius  # Mettre à jour la position Y
+
+            # Vérification si le personnage est au sol avant de mettre à jour la position y
+            if self.on_ground:
+                terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
+                self.y = terrain_height - self.radius  # Mettre à jour la position Y
+        else:
+            # Si on dépasse les bords, on empêche le mouvement
+            self.x = max(0, min(self.x, WIDTH - 1))  # Rendre la position valide
 
     def jump(self):
         if self.on_ground:
