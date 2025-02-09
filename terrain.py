@@ -1,67 +1,77 @@
 import pygame
-import random
 import numpy as np
+import random
 
-# Couleur utilisée pour dessiner le terrain
-GROUND_BROWN = (139, 69, 19)
-
-def generate_terrain(width, height, min_height, max_height, smoothness):
+def generate_island(width, height, min_height, max_height, variation):
     """
-    Génère une liste représentant les hauteurs du terrain avec des courbes douces.
+    Génère un terrain en forme d'île avec un pic central et une pente douce vers l'eau.
+    
+    Paramètres :
+      - width : largeur du terrain (nombre de colonnes)
+      - height : hauteur totale de l'écran (pour référence)
+      - min_height : hauteur minimale (niveau de l'eau)
+      - max_height : hauteur maximale (au centre de l'île)
+      - variation : amplitude des variations aléatoires à ajouter (non utilisée ici)
+      
+    Renvoie :
+      Un tableau numpy de type int contenant la hauteur du terrain pour chaque colonne.
     """
-    control_points = [
-        random.randint(min_height, max_height) for _ in range(smoothness)
-    ]
-    control_x = np.linspace(0, width, num=smoothness)
+    terrain = np.zeros(width)
+    center = width // 2
 
-    interpolator = np.interp(np.arange(width), control_x, control_points)
+    for x in range(width):
+        # Calcul de la distance par rapport au centre
+        distance = abs(x - center)
+        
+        # L'île commence haute au centre, puis descend progressivement vers les bords
+        base_height = max_height - (max_height - min_height) * (distance / center) ** 2
+        
+        # Ajouter une pente douce vers le bas de l'écran
+        height_factor = (height - 100 - base_height) / (height - 100)  # Gradient de la pente vers l'eau
+        base_height += height_factor * (min_height - base_height)  # Ajuste la hauteur selon l'écran
+        
+        terrain[x] = base_height
 
-    return interpolator.astype(int)
+    # Aucune variation aléatoire n'est ajoutée ici, l'île est maintenant lisse
+    return terrain.astype(int)
 
 def draw_terrain(screen, terrain, height):
     """
-    Dessine le terrain sur l'écran.
+    Dessine le terrain avec l'eau au bas de l'écran.
+    
+    Paramètres :
+      - screen : la surface Pygame où dessiner
+      - terrain : tableau des hauteurs du terrain pour chaque colonne
+      - height : hauteur totale de l'écran
     """
-    for x, terrain_height in enumerate(terrain):
-        pygame.draw.line(screen, GROUND_BROWN, (x, height), (x, height - terrain_height))
+    # Dessiner l'île
+    terrain_color = (34, 139, 34)  # Vert foncé pour représenter l'île
+    for x in range(len(terrain)):
+        pygame.draw.line(screen, terrain_color, (x, terrain[x]), (x, height))  # L'île s'arrête avant l'eau
 
-def create_crater(terrain, explosion_x, radius):
+def create_crater(terrain, x, radius):
     """
-    Modifie le terrain pour créer un cratère en forme plus circulaire avec des bords lissés.
-
-    Args:
-        terrain (list): Liste représentant les hauteurs du terrain.
-        explosion_x (int): Position X du centre de l'explosion.
-        radius (int): Rayon de l'explosion.
-
-    Returns:
-        list: Terrain modifié avec un cratère circulaire.
+    Modifie le terrain pour créer un cratère circulaire à la position x avec le rayon spécifié.
+    
+    Paramètres :
+      - terrain : tableau des hauteurs du terrain
+      - x : position centrale du cratère (en index)
+      - radius : rayon du cratère
+      
+    Renvoie :
+      Le tableau du terrain modifié.
     """
-    for x in range(max(0, explosion_x - radius), min(len(terrain), explosion_x + radius + 1)):
-        dx = x - explosion_x  # Distance horizontale par rapport au centre
-        if abs(dx) < radius:
-            # Utilisation d'une équation parabolique pour créer un cratère plus circulaire
-            depth = int((radius**2 - dx**2) ** 0.5)  # Forme circulaire
-            terrain[x] = max(0, terrain[x] - depth)  # Empêche des valeurs négatives
+    for i in range(max(0, x - radius), min(len(terrain), x + radius)):
+        # Calcul de la distance horizontale par rapport au centre du cratère
+        distance = abs(i - x)
 
-            # Lissage des bords pour une transition plus naturelle
-            if abs(dx) > radius * 0.7:  # Seulement aux bords du cratère
-                terrain[x] += (abs(dx) - radius * 0.7) // 2  # Adoucit la pente
+        # Si la distance est inférieure au rayon, on applique la déformation
+        if distance < radius:
+            # Appliquer une fonction lissée pour la profondeur (courbe plus douce)
+            depth = int((radius - distance) ** 0.87)  # Courbe quadratique plus douce
+
+            # Appliquer la profondeur, mais éviter de dépasser une hauteur trop faible
+            terrain[i] = max(terrain[i] + depth, 0)  # On déforme vers le bas (le terrain "descend")
 
     return terrain
 
-def smooth_terrain(terrain, strength=2):
-    """
-    Applique une moyenne glissante pour adoucir les variations abruptes du terrain.
-
-    Args:
-        terrain (list): Liste des hauteurs du terrain.
-        strength (int): Nombre d'itérations de lissage.
-
-    Returns:
-        list: Terrain lissé.
-    """
-    for _ in range(strength):
-        for i in range(1, len(terrain) - 1):
-            terrain[i] = (terrain[i - 1] + terrain[i] + terrain[i + 1]) // 3
-    return terrain
