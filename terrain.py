@@ -1,45 +1,67 @@
 import pygame
 import random
+import numpy as np
 
 # Couleur utilisée pour dessiner le terrain
 GROUND_BROWN = (139, 69, 19)
 
-# Génération du terrain
 def generate_terrain(width, height, min_height, max_height, smoothness):
     """
-    Génère une liste représentant les hauteurs du terrain.
-    
-    Args:
-        width (int): Largeur totale du terrain (en pixels).
-        height (int): Hauteur de la fenêtre (non utilisée directement ici).
-        min_height (int): Hauteur minimale du terrain.
-        max_height (int): Hauteur maximale du terrain.
-        smoothness (int): Facteur de lissage pour limiter les variations entre les hauteurs.
-
-    Returns:
-        list: Une liste contenant les hauteurs du terrain à chaque pixel horizontal.
+    Génère une liste représentant les hauteurs du terrain avec des courbes douces.
     """
-    terrain = []
-    last_height = random.randint(min_height, max_height)  # Hauteur initiale aléatoire
-    for x in range(width):
-        # Calcul d'une nouvelle hauteur avec une variation limitée par "smoothness"
-        new_height = last_height + random.randint(-smoothness, smoothness)
-        # Assure que la hauteur reste dans les limites spécifiées
-        new_height = max(min_height, min(max_height, new_height))
-        terrain.append(new_height)  # Ajoute la hauteur au terrain
-        last_height = new_height  # Met à jour la dernière hauteur
-    return terrain
+    control_points = [
+        random.randint(min_height, max_height) for _ in range(smoothness)
+    ]
+    control_x = np.linspace(0, width, num=smoothness)
 
-# Dessin du terrain
+    interpolator = np.interp(np.arange(width), control_x, control_points)
+
+    return interpolator.astype(int)
+
 def draw_terrain(screen, terrain, height):
     """
     Dessine le terrain sur l'écran.
-
-    Args:
-        screen (Surface): Surface Pygame sur laquelle dessiner.
-        terrain (list): Liste des hauteurs du terrain.
-        height (int): Hauteur totale de la fenêtre.
     """
     for x, terrain_height in enumerate(terrain):
-        # Dessine une ligne verticale pour chaque pixel horizontal du terrain
         pygame.draw.line(screen, GROUND_BROWN, (x, height), (x, height - terrain_height))
+
+def create_crater(terrain, explosion_x, radius):
+    """
+    Modifie le terrain pour créer un cratère en forme plus circulaire avec des bords lissés.
+
+    Args:
+        terrain (list): Liste représentant les hauteurs du terrain.
+        explosion_x (int): Position X du centre de l'explosion.
+        radius (int): Rayon de l'explosion.
+
+    Returns:
+        list: Terrain modifié avec un cratère circulaire.
+    """
+    for x in range(max(0, explosion_x - radius), min(len(terrain), explosion_x + radius + 1)):
+        dx = x - explosion_x  # Distance horizontale par rapport au centre
+        if abs(dx) < radius:
+            # Utilisation d'une équation parabolique pour créer un cratère plus circulaire
+            depth = int((radius**2 - dx**2) ** 0.5)  # Forme circulaire
+            terrain[x] = max(0, terrain[x] - depth)  # Empêche des valeurs négatives
+
+            # Lissage des bords pour une transition plus naturelle
+            if abs(dx) > radius * 0.7:  # Seulement aux bords du cratère
+                terrain[x] += (abs(dx) - radius * 0.7) // 2  # Adoucit la pente
+
+    return terrain
+
+def smooth_terrain(terrain, strength=2):
+    """
+    Applique une moyenne glissante pour adoucir les variations abruptes du terrain.
+
+    Args:
+        terrain (list): Liste des hauteurs du terrain.
+        strength (int): Nombre d'itérations de lissage.
+
+    Returns:
+        list: Terrain lissé.
+    """
+    for _ in range(strength):
+        for i in range(1, len(terrain) - 1):
+            terrain[i] = (terrain[i - 1] + terrain[i] + terrain[i + 1]) // 3
+    return terrain
