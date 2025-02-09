@@ -1,4 +1,5 @@
 import pygame
+import subprocess
 import sys
 
 # Initialisation de pygame
@@ -91,6 +92,8 @@ while running:
                 for button in buttons:
                     if button.is_clicked(event.pos):
                         if button.action == "play":
+                            subprocess.run(["python", "main.py"])  # Exécute main.py
+                            running = False  # Ferme le menu après lancement
                             print("Lancer le jeu...")
                         elif button.action == "credits":
                             current_scene = "credits"
