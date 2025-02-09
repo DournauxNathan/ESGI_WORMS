@@ -136,14 +136,12 @@ while running:
 
     # Vérification des touches pour mouvement horizontal - pour le joueur actuel seulement
     keys = pygame.key.get_pressed()
-    if current_player == 0:  # Si c'est au tour du joueur actif, Ne pas autoriser le joueur à sortir de l'écran
-        if keys[pygame.K_LEFT]:
-            if players[current_player][0].x > 0:  # Vérifie si le personnage ne sort pas de l'écran à gauche
-                players[current_player][0].move(-1, terrain, WIDTH)
-        if keys[pygame.K_RIGHT]:
-            if players[current_player][0].x < WIDTH - 1:  # Vérifie si le personnage ne sort pas de l'écran à droite
-                players[current_player][0].move(1, terrain, WIDTH)
-
+    if keys[pygame.K_LEFT]:
+        if players[current_player][0].x > 0:  # Vérifie si le personnage ne sort pas de l'écran à gauche
+            players[current_player][0].move(-1, terrain, WIDTH)
+    if keys[pygame.K_RIGHT]:
+        if players[current_player][0].x < WIDTH - 1:  # Vérifie si le personnage ne sort pas de l'écran à droite
+            players[current_player][0].move(1, terrain, WIDTH)
 
     # Si le temps du tour est écoulé, on passe au joueur suivant
     if remaining_time == 0:
@@ -153,4 +151,4 @@ while running:
     pygame.display.flip()
     clock.tick(60)
 
-pygame.quit()
+pygame.quit(self)
