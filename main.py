@@ -5,6 +5,7 @@ from terrain import generate_terrain, draw_terrain, create_crater
 import numpy as np
 import math
 from settings import WIDTH, HEIGHT, MIN_HEIGHT, MAX_HEIGHT, VARIATION, SKY_BLUE, PLAYER_COLORS, turn_time_limit
+from inventory import Inventory  # Import the Inventory class
 
 class WormsGame:
     def __init__(self):
@@ -31,6 +32,9 @@ class WormsGame:
 
         # Initialisation des personnages et de leurs couleurs
         self.players = self.initialize_players()
+
+        # Initialisation de l'inventaire
+        self.inventory = Inventory()
 
         # Boucle principale du jeu
         self.running = True
@@ -112,6 +116,9 @@ class WormsGame:
         timer_text = self.font.render(f"Temps restant: {remaining_time}s", True, (0, 0, 0))
         self.screen.blit(timer_text, (WIDTH // 2 - timer_text.get_width() // 2, 20))
 
+        # Draw the inventory UI
+        self.inventory.draw(self.screen, self.font)
+
         # Gestion des événements
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -125,6 +132,12 @@ class WormsGame:
                     self.turn_start_time = pygame.time.get_ticks()  # Redémarre le chronomètre du tour
                 elif event.key == pygame.K_TAB:  # Changer de personnage
                     self.current_character_index = (self.current_character_index + 1) % len(self.players[self.current_player])
+                elif event.key == pygame.K_1:  # Select Weapon 1
+                    self.inventory.select_weapon(0)
+                elif event.key == pygame.K_2:  # Select Weapon 2
+                    self.inventory.select_weapon(1)
+                elif event.key == pygame.K_3:  # Select Weapon 3
+                    self.inventory.select_weapon(2)
 
         # Vérification des touches pour mouvement horizontal - pour le personnage actuel seulement
         keys = pygame.key.get_pressed()
