@@ -2,7 +2,7 @@ import pygame
 import numpy as np
 import random
 
-def generate_island(width, height, min_height, max_height, variation):
+def generate_terrain(width, height, min_height, max_height, variation):
     """
     Génère un terrain en forme d'île avec un pic central et une pente douce vers l'eau.
     
