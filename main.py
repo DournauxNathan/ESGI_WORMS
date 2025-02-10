@@ -164,7 +164,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
+            if event.key == pygame.K_SPACE:  # Jump
                 players[current_player][current_character_index].jump()  # Saut pour le personnage actuel
             elif event.key == pygame.K_RETURN:  # Passe au tour suivant
                 current_player = (current_player + 1) % NUM_PLAYERS
@@ -172,8 +172,8 @@ while running:
                 turn_start_time = pygame.time.get_ticks()  # Redémarre le chronomètre du tour
             elif event.key == pygame.K_TAB:  # Changer de personnage
                 current_character_index = (current_character_index + 1) % len(players[current_player])
-            elif event.key == pygame.K_SPACE:  # Création d'un cratère
-                pass  # create_crater(terrain, 50, 25)
+            #elif event.key == pygame.K_SPACE:  # Création d'un cratère
+            #create_crater(terrain, 50, 25)
 
     # Vérification des touches pour mouvement horizontal - pour le personnage actuel seulement
     keys = pygame.key.get_pressed()
