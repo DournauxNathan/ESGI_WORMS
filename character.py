@@ -14,7 +14,6 @@ class Character:
         self.radius = 15  # Rayon du personnage (taille)
         self.health = 150  # Vie initiale
         self.player_number = player_number  # Numéro du joueur (1, 2, etc.)
-        
 
     def apply_gravity(self, terrain):
         if not self.on_ground:
@@ -70,4 +69,3 @@ class Character:
         player_name = f"{self.health}"
         name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
         screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 30))
-

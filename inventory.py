@@ -1,6 +1,6 @@
 import pygame
 import pygame_gui
-from settings import HEIGHT
+from settings import HEIGHT, WIDTH
 
 # inventory.py
 class Inventory:
@@ -13,7 +13,7 @@ class Inventory:
         self.weapon_buttons = []
         for i, weapon in enumerate(self.weapons):
             button = pygame_gui.elements.UIButton(
-                relative_rect=pygame.Rect(50 + i * 150, HEIGHT - 100, 140, 50),
+                relative_rect=pygame.Rect(300 + i * 150, HEIGHT - 100, 140, 50),
                 text=weapon,
                 manager=self.manager
             )
