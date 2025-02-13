@@ -1,8 +1,6 @@
 import pygame
 import random
-
-# Constantes pour la gravité et la taille
-GRAVITY = 0.5
+import settings
 
 class Character:
     def __init__(self, x, y, color, player_number):
@@ -16,10 +14,11 @@ class Character:
         self.radius = 15  # Rayon du personnage (taille)
         self.health = 150  # Vie initiale
         self.player_number = player_number  # Numéro du joueur (1, 2, etc.)
+        
 
     def apply_gravity(self, terrain):
         if not self.on_ground:
-            self.vel_y += GRAVITY
+            self.vel_y += settings.GRAVITY
             new_y = self.y + self.vel_y
 
             # Vérification de la collision avec le terrain
@@ -53,16 +52,22 @@ class Character:
             self.vel_y = -9.81  # Le saut est effectué en modifiant la vitesse verticale
             self.on_ground = False  # Le personnage est maintenant en l'air
 
+    def update_position(self, x, y, terrain):
+        if not self.on_ground:
+            terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
+            self.y = terrain_height - self.radius
+
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)),
                            self.radius)  # Dessin du personnage avec le rayon
 
-    def draw_health_bar(self, screen):
-        player_name = f"{self.health}"
-        name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
-        screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 60))
-
     def draw_player_name(self, screen):
         player_name = f"Player {self.player_number}"
         name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
+        screen.blit(name_text, (self.x - self.radius - 15, self.y - self.radius - 60))
+    
+    def draw_health_bar(self, screen):
+        player_name = f"{self.health}"
+        name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
         screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 30))
+

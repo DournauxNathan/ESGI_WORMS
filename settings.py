@@ -4,7 +4,8 @@ MIN_HEIGHT = 310  # Hauteur minimale (niveau de l'eau)
 MAX_HEIGHT = 480  # Hauteur maximale (au centre de l'île)
 CRATER_NUMBER = 20  # Variation aléatoire
 
-CHARA_NUMBER = 2
+CHARA_NUMBER = 2 # Nombre de personnage par joueur
+GRAVITY = 1.25 # Constante pour la gravité
 
 # Couleurs
 SKY_COLOR = (135, 206, 235)

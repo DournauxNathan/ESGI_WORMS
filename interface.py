@@ -1,13 +1,13 @@
-import pygame  # Assurez-vous d'importer pygame
+import pygame
 import pygame_gui
 from settings import HEIGHT
 
 # inventory.py
 class Inventory:
     def __init__(self, manager):
-        self.weapons = ["Weapon 1", "Weapon 2", "Weapon 3"]
+        self.weapons = ["Knife", "Rocket", "Grenade"]
         self.current_weapon_index = 0
-        self.manager = manager  # Pygame GUI manager
+        self.manager = manager
 
         # Créer des boutons pour chaque arme
         self.weapon_buttons = []

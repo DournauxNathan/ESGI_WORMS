@@ -5,11 +5,13 @@ from terrain import generate_terrain, create_random_craters, draw_terrain, creat
 import numpy as np
 import math
 import settings
-from inventory import Inventory  # Import the Inventory class
-import pygame_gui  # Import pygame_gui
+from interface import Inventory
+import pygame_gui
 
 class WormsGame:
+    #region FONCTIONS
     def __init__(self):
+        #region INITIALISATION
         # Initialisation de Pygame
         pygame.init()
         
@@ -37,6 +39,7 @@ class WormsGame:
         # Initialisation de pygame_gui & de l'inventaire avec le gestionnaire
         self.manager = pygame_gui.UIManager((settings.WIDTH, settings.HEIGHT))
         self.inventory = Inventory(self.manager)
+        #endregion
 
         # Boucle principale du jeu
         self.running = True
@@ -75,7 +78,7 @@ class WormsGame:
 
             pygame.display.flip()
 
-        return 1  # Retourne un joueur si on quitte la fenêtre
+        return 1
 
     def initialize_players(self):
         players = []
@@ -97,6 +100,7 @@ class WormsGame:
                 self.running = False  # Arrêter la boucle en cas d'erreur
 
         return players
+    #endregion
 
     def start(self):
         while self.running:
@@ -105,41 +109,29 @@ class WormsGame:
     def update(self):
         self.screen.fill(settings.SKY_COLOR)
         draw_terrain(self.screen, self.terrain, settings.HEIGHT)
-
-        # Affichage et mise à jour des personnages
-        for player_index in range(self.num_players):
-            for character_index in range(len(self.players[player_index])):  # Plusieurs personnages par joueur
-                current_character_obj = self.players[player_index][character_index]
-                current_character_obj.apply_gravity(self.terrain)  # Le personnage utilise la gravité
-                current_character_obj.draw(self.screen)  # Dessiner le personnage
-                current_character_obj.draw_health_bar(self.screen)  # Dessiner la barre de vie
-                current_character_obj.draw_player_name(self.screen)  # Afficher le nom du joueur
-
         # Dessiner l'interface de l'inventaire
         self.inventory.draw(self.screen)
 
-        # Gestion des événements
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:  # Jump
-                    self.players[self.current_player][self.current_character_index].jump()  # Saut pour le personnage actuel
-                elif event.key == pygame.K_RETURN:  # Passe au tour suivant
-                    self.current_player = (self.current_player + 1) % self.num_players
-                    self.current_character_index = 0  # Réinitialiser l'index du personnage
-                elif event.key == pygame.K_TAB:  # Changer de personnage
-                    self.current_character_index = (self.current_character_index + 1) % len(self.players[self.current_player])
-                elif event.key == pygame.K_1:  # Select Weapon 1
-                    self.inventory.select_weapon(0)
-                elif event.key == pygame.K_2:  # Select Weapon 2
-                    self.inventory.select_weapon(1)
-                elif event.key == pygame.K_3:  # Select Weapon 3
-                    self.inventory.select_weapon(2)
+        #region Affichage et mise à jour des personnages
+        for player_index in range(self.num_players):
+            for character_index in range(len(self.players[player_index])):  # Plusieurs personnages par joueur
+                current_character_obj = self.players[player_index][character_index]
+                
+                # Appliquer la gravité
+                current_character_obj.apply_gravity(self.terrain)  # Le personnage utilise la gravité
+                
+                # Vérifier la position Y par rapport au terrain
+                
+                terrain_height = self.terrain[int(current_character_obj.x)]  # Hauteur du terrain à la position X
+                if current_character_obj.y < terrain_height and current_character_obj.on_ground:  # Si le personnage est au-dessus du terrain
+                    current_character_obj.y = terrain_height  # Ajuster la position Y au niveau du terrain
+                
+                current_character_obj.draw(self.screen)  # Dessiner le personnage
+                current_character_obj.draw_player_name(self.screen)  # Afficher le nom du joueur    
+                current_character_obj.draw_health_bar(self.screen)  # Dessiner la barre de vie
+        #endregion
 
-            self.manager.process_events(event)  # Process pygame_gui events
-
-        # Vérification des touches pour mouvement horizontal - pour le personnage actuel seulement
+        #region Vérification des touches pour mouvement horizontal - pour le personnage actuel seulement
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             if self.players[self.current_player][self.current_character_index].x > 0:
@@ -147,6 +139,44 @@ class WormsGame:
         if keys[pygame.K_RIGHT]:
             if self.players[self.current_player][ self.current_character_index].x < settings.WIDTH - 1:
                 self.players[self.current_player][self.current_character_index].move(1, self.terrain, settings.WIDTH)
+        if keys[pygame.K_UP]:
+            print("+") # Modifie l'angle de tir en positif
+        if keys[pygame.K_DOWN]:
+            print("-")  # Modifie l'angle de tir en négatif
+        #endregion
+
+        #region Gestion des événements [APPUIE SUR UNE TOUCHE]
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                # DEBUG
+                if event.key == pygame.K_F4:  # Passe au tour suivant
+                    self.current_player = (self.current_player + 1) % self.num_players
+                elif event.key == pygame.K_F5:  # Créer une explosion
+                    self.terrain = create_crater(self.terrain, random.randint(1, settings.WIDTH-1), random.randint(25,50)) #Création d'un cratère
+                # PLAYER INPUT
+                elif event.key == pygame.K_RETURN:  # FIRE
+                    print("Tirer")
+                
+                elif event.key == pygame.K_SPACE:  # Jump
+                    self.players[self.current_player][self.current_character_index].jump()
+
+                elif event.key == pygame.K_TAB:  # Changer de personnage
+                    self.current_character_index = (self.current_character_index + 1) % len(self.players[self.current_player])
+
+                # SELECTION DES ARMES
+                elif event.key == pygame.K_1:
+                    self.inventory.select_weapon(0)
+                
+                elif event.key == pygame.K_2:
+                    self.inventory.select_weapon(1)
+                
+                elif event.key == pygame.K_3:
+                    self.inventory.select_weapon(2)
+            
+            self.manager.process_events(event)  # Process pygame_gui events
+        #endregion    
 
         self.manager.update(self.clock.tick(60) / 1000.0)  # Mettre à jour le gestionnaire
         self.manager.draw_ui(self.screen)  # Dessiner l'interface utilisateur

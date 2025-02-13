@@ -78,7 +78,6 @@ def create_crater(terrain, x, radius):
 
     return terrain  # Renvoie le terrain modifié
 
-
 # Pseudo-code
 """
 Fonction generate_terrain(width, height, min_height, max_height):
