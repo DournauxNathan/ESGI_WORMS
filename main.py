@@ -1,163 +1,158 @@
 import pygame
 import random
-from character import Character
-from terrain import generate_terrain, draw_terrain, create_crater
 import numpy as np
 import math
-from settings import WIDTH, HEIGHT, MIN_HEIGHT, MAX_HEIGHT, VARIATION, SKY_BLUE, PLAYER_COLORS, turn_time_limit
-from inventory import Inventory  # Import the Inventory class
+import settings
+import pygame_gui
+from character import Character
+from terrain import generate_terrain, create_random_craters, draw_terrain, create_crater
+from inventory import Inventory
 
 class WormsGame:
+    #region INITIALISATION
     def __init__(self):
-        # Initialisation de Pygame
+        """
+        Initialisation du jeu : Pygame, écran, terrain, joueurs, interface et boucle de jeu.
+        """
         pygame.init()
         
         # Initialisation de l'écran
-        self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        self.screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
         pygame.display.set_caption("Worms Game")
         
         # Police pour afficher le texte
         self.font = pygame.font.SysFont("Arial", 24)
-
-        # Initialisation des variables de jeu
-        self.current_player = 0  # Le joueur actuellement en train de jouer
-        self.current_character_index = 0  # L'index du personnage actuellement contrôlé
-        self.turn_start_time = pygame.time.get_ticks()  # Le temps du début du tour
-
-        # Demander le nombre de joueurs avant de commencer
+        
+        # Variables de jeu
+        self.current_player = 0  # Joueur actuel
+        self.current_character_index = 0  # Personnage actuel
         self.num_players = self.ask_number_of_players()
-
-        # Initialisation du terrain
-        self.terrain = generate_terrain(WIDTH, HEIGHT, MIN_HEIGHT, MAX_HEIGHT, VARIATION)
-
-        # Initialisation des personnages et de leurs couleurs
+        
+        # Génération du terrain
+        self.terrain = generate_terrain(settings.WIDTH, settings.HEIGHT, settings.MIN_HEIGHT, settings.MAX_HEIGHT)
+        self.terrain = create_random_craters(self.terrain, 20, settings.WIDTH)
+        
+        # Initialisation des joueurs
         self.players = self.initialize_players()
-
-        # Initialisation de l'inventaire
-        self.inventory = Inventory()
-
-        # Boucle principale du jeu
+        
+        # Gestion de l'interface et de l'inventaire
+        self.manager = pygame_gui.UIManager((settings.WIDTH, settings.HEIGHT))
+        self.inventory = Inventory(self.manager)
+        
+        # Boucle de jeu
         self.running = True
         self.clock = pygame.time.Clock()
-
+    #endregion
+    
+    #region DEMANDE_NOMBRE_JOUEURS
     def ask_number_of_players(self):
+        """
+        Demande à l'utilisateur d'entrer le nombre de joueurs (1-6) et le valide.
+        """
         running = True
-        input_text = ""
+        input_text = "1"
         color = (0, 0, 0)
-
+        
         while running:
-            self.screen.fill(SKY_BLUE)
-            # Afficher le texte demandant le nombre de joueurs
-            prompt_text = self.font.render("Entrez le nombre de joueurs (1-6): " + input_text, True, color)
-            self.screen.blit(prompt_text, (WIDTH // 4, HEIGHT // 2))
-
+            self.screen.fill(settings.SKY_COLOR)
+            prompt_text = self.font.render(f"Entrez le nombre de joueurs (1-6): {input_text}", True, color)
+            self.screen.blit(prompt_text, (settings.WIDTH // 4, settings.HEIGHT // 2))
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_RETURN:
-                        if input_text.isdigit():
-                            num_players = int(input_text)
-                            if 1 <= num_players <= 6:
-                                return num_players  # Retourner le nombre de joueurs
-                            else:
-                                input_text = ""  # Réinitialiser si le nombre est invalide
-                                color = (255, 0, 0)  # Rouge pour erreur
+                    if event.key == pygame.K_RETURN and input_text.isdigit():
+                        num_players = int(input_text)
+                        if 1 <= num_players <= 6:
+                            return num_players
                         else:
-                            input_text = ""  # Réinitialiser si l'entrée n'est pas un nombre
-                            color = (255, 0, 0)  # Rouge pour erreur
+                            input_text = ""
+                            color = (255, 0, 0)
                     elif event.key == pygame.K_BACKSPACE:
                         input_text = input_text[:-1]
-                    elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6]:
+                    elif event.unicode.isdigit():
                         input_text += event.unicode
-
+            
             pygame.display.flip()
-
-        return 1  # Retourne un joueur si on quitte la fenêtre
-
+        
+        return 1
+    #endregion
+    
+    #region INITIALISATION_JOUEURS
     def initialize_players(self):
+        """
+        Initialise les joueurs avec leurs personnages et couleurs respectives.
+        """
         players = []
         for i in range(self.num_players):
-            spawn_x = 50 + (i * (WIDTH - 100) // self.num_players)
-            player_color = PLAYER_COLORS[i % len(PLAYER_COLORS)]
-
-            print(f"Création du joueur {i + 1} à la position {spawn_x}, couleur {player_color}")
-
-            try:
-                # Créer 2 personnages par joueur
-                player_characters = [Character(spawn_x, 100 + j * 50, player_color, i + 1) for j in range(2)]
-                players.append(player_characters)  # Ajouter les personnages à la liste
-                print(f"Joueur {i + 1} créé avec succès avec {len(player_characters)} personnages")
-            except Exception as e:
-                print(f"Erreur lors de la création du joueur {i + 1}: {e}")
-                self.running = False  # Arrêter la boucle en cas d'erreur
+            player_color = settings.PLAYER_COLORS[i % len(settings.PLAYER_COLORS)]
+            player_characters = [Character(random.randint(50, settings.WIDTH - 100) + 25, 100 + j * 50, player_color, i + 1) 
+                                 for j in range(settings.CHARA_NUMBER)]
+            players.append(player_characters)
         return players
-
+    #endregion
+    
+    #region BOUCLE_PRINCIPALE
     def start(self):
+        """
+        Démarre la boucle principale du jeu.
+        """
         while self.running:
             self.update()
-
+    #endregion
+    
+    #region MISE_A_JOUR
     def update(self):
-        self.screen.fill(SKY_BLUE)
-        draw_terrain(self.screen, self.terrain, HEIGHT)
-
-        # Affichage et mise à jour des personnages
-        for player_index in range(self.num_players):
-            for character_index in range(len(self.players[player_index])):  # Plusieurs personnages par joueur
-                current_character_obj = self.players[player_index][character_index]
-                current_character_obj.apply_gravity(self.terrain)  # Le personnage utilise la gravité
-                current_character_obj.draw(self.screen)  # Dessiner le personnage
-                current_character_obj.draw_health_bar(self.screen)  # Dessiner la barre de vie
-                current_character_obj.draw_player_name(self.screen)  # Afficher le nom du joueur
-
-        # Affichage du temps restant pour le tour actuel
-        elapsed_time = (pygame.time.get_ticks() - self.turn_start_time) // 1000
-        remaining_time = max(0, turn_time_limit - elapsed_time)
-        timer_text = self.font.render(f"Temps restant: {remaining_time}s", True, (0, 0, 0))
-        self.screen.blit(timer_text, (WIDTH // 2 - timer_text.get_width() // 2, 20))
-
-        # Draw the inventory UI
-        self.inventory.draw(self.screen, self.font)
-
-        # Gestion des événements
+        """
+        Met à jour l'état du jeu, gère les entrées et affiche les éléments.
+        """
+        self.screen.fill(settings.SKY_COLOR)
+        draw_terrain(self.screen, self.terrain, settings.HEIGHT)
+        self.inventory.draw(self.screen)
+        
+        # Affichage des personnages
+        for player in self.players:
+            for character in player:
+                character.apply_gravity(self.terrain)
+                character.draw(self.screen)
+                character.draw_player_name(self.screen)
+                character.draw_health_bar(self.screen)
+        
+        # Gestion des mouvements des personnages
+        keys = pygame.key.get_pressed()
+        current_character = self.players[self.current_player][self.current_character_index]
+        if keys[pygame.K_LEFT] and current_character.x > 0:
+            current_character.move(-1, self.terrain, settings.WIDTH)
+        if keys[pygame.K_RIGHT] and current_character.x < settings.WIDTH - 1:
+            current_character.move(1, self.terrain, settings.WIDTH)
+        
+        # Gestion des événements clavier
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:  # Jump
-                    self.players[self.current_player][self.current_character_index].jump()  # Saut pour le personnage actuel
-                elif event.key == pygame.K_RETURN:  # Passe au tour suivant
+                if event.key == pygame.K_F4:
                     self.current_player = (self.current_player + 1) % self.num_players
-                    self.current_character_index = 0  # Réinitialiser l'index du personnage
-                    self.turn_start_time = pygame.time.get_ticks()  # Redémarre le chronomètre du tour
-                elif event.key == pygame.K_TAB:  # Changer de personnage
+                elif event.key == pygame.K_F5:
+                    self.terrain = create_crater(self.terrain, random.randint(1, settings.WIDTH - 1), random.randint(25, 50))
+                elif event.key == pygame.K_RETURN:
+                    print("Tirer")
+                elif event.key == pygame.K_SPACE:
+                    current_character.jump()
+                elif event.key == pygame.K_TAB:
                     self.current_character_index = (self.current_character_index + 1) % len(self.players[self.current_player])
-                elif event.key == pygame.K_1:  # Select Weapon 1
-                    self.inventory.select_weapon(0)
-                elif event.key == pygame.K_2:  # Select Weapon 2
-                    self.inventory.select_weapon(1)
-                elif event.key == pygame.K_3:  # Select Weapon 3
-                    self.inventory.select_weapon(2)
-
-        # Vérification des touches pour mouvement horizontal - pour le personnage actuel seulement
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            if self.players[self.current_player][self.current_character_index].x > 0:
-                self.players[self.current_player][self.current_character_index].move(-1, self.terrain, WIDTH)
-        if keys[pygame.K_RIGHT]:
-            if self.players[self.current_player][self.current_character_index].x < WIDTH - 1:
-                self.players[self.current_player][self.current_character_index].move(1, self.terrain, WIDTH)
-
-        # Si le temps du tour est écoulé, on passe au joueur suivant
-        if remaining_time == 0:
-            self.current_player = (self.current_player + 1) % self.num_players
-            self.current_character_index = 0  # Réinitialiser l'index du personnage
-            self.turn_start_time = pygame.time.get_ticks()  # Redémarre le chronomètre du tour
-
+                elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
+                    self.inventory.select_weapon(int(event.unicode) - 1)
+                
+                self.manager.process_events(event)
+        
+        self.manager.update(self.clock.tick(60) / 1000.0)
+        self.manager.draw_ui(self.screen)
         pygame.display.flip()
-        self.clock.tick(100)
-
+        self.clock.tick(60)
+    #endregion
+    
 if __name__ == "__main__":
-    game = WormsGame()
-    game.start()
+    WormsGame().start()
     pygame.quit()
