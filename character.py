@@ -52,14 +52,14 @@ class Character:
                 terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
                 self.y = terrain_height - self.radius  # Met à jour la position Y
         else:
-            # Si on dépasse les bords, on empêche le mouvement
+            # Si on dépasse les bords, on empeche le mouvement
             self.x = max(0, min(self.x, WIDTH - 1))  # Rendre la position valide
 
     def jump(self):
         """Fait sauter le personnage."""
         if self.on_ground:  # Le personnage peut sauter seulement s'il est au sol
-            self.vel_y = -9.81  # Définit la vitesse verticale pour le saut
-            self.on_ground = False  # Le personnage est maintenant en l'air
+            self.vel_y = -9.81  # Definit la vitesse verticale pour le saut
+            self.on_ground = False  # Le personnage est en l'air
 
     def update_position(self, x, y, terrain):
         """Met à jour la position du personnage"""
@@ -70,19 +70,16 @@ class Character:
 
     #region Affichage
     def draw(self, screen):
-        """Dessine le personnage sur l'écran."""
         if self.health > 0:  # Vérifiez si le personnage est vivant
             pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)  # Dessin du personnage avec le rayon
 
     def draw_player_name(self, screen):
-        """Dessine le nom du joueur au-dessus du personnage."""
         if self.health > 0:  # Vérifiez si le personnage est vivant
             player_name = f"Player {self.player_number}"  # Crée le texte du nom du joueur
             name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))  # Rendu du texte
             screen.blit(name_text, (self.x - self.radius - 15, self.y - self.radius - 60))  # Affiche le texte
 
     def draw_health_bar(self, screen):
-        """Dessine la barre de vie du personnage."""
         if self.health > 0:  # Vérifiez si le personnage est vivant
             player_name = f"{self.health}"  # Crée le texte de la vie
             name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))  # Rendu du texte
