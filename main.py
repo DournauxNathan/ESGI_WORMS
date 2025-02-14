@@ -111,13 +111,24 @@ class WormsGame:
     #region BOUCLE_PRINCIPALE
     def start(self):
         """ Démarre la boucle principale du jeu. """
+        self.running = True  # Réinitialise l'état de la variable running
         while True:  # Boucle infinie pour relancer le jeu
-            self.running = True  # Réinitialise l'état de la variable running
             while self.running:
                 self.update()
                 self.check_game_over()  # Vérifie si la partie est terminée
-            self.display_winner()  # Affiche le vainqueur
-            self.reset_game()  # Réinitialise le jeu
+            
+            if self.winner is not None:  # Afficher le vainqueur seulement si un joueur a gagné
+                self.display_winner()
+
+            # Vérifie si le joueur veut rejouer
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    self.reset_game()  # Relance une nouvelle partie
+                    break
+                elif event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+                    pygame.quit()
+                    return  # Quitte proprement le programme
+
     #endregion
     
     #region MISE_A_JOUR
@@ -146,15 +157,24 @@ class WormsGame:
         if keys[pygame.K_RIGHT] and current_character.x < settings.WIDTH - 1:
             current_character.move(1, self.terrain, settings.WIDTH)
         
-        # # Gestion des événements clavier
+        # Gestion des événements clavier
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_F4:
+                if event.key == pygame.K_ESCAPE:
+                    print("STOP THE GAME")
+                    self.running = False
+                elif event.key == pygame.K_F4:
                     self.current_player = (self.current_player + 1) % self.num_players
                 elif event.key == pygame.K_F5:
                     self.terrain = create_crater(self.terrain, random.randint(1, settings.WIDTH - 1), random.randint(25, 50))
+                elif event.key == pygame.K_1:
+                    self.inventory.current_weapon_index = 0
+                elif event.key == pygame.K_2:
+                    self.inventory.current_weapon_index = 1
+                elif event.key == pygame.K_3:
+                    self.inventory.current_weapon_index = 2
                 elif event.key == pygame.K_RETURN:
                     print(" Tirer")
                 elif event.key == pygame.K_SPACE:
