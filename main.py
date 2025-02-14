@@ -119,6 +119,7 @@ class WormsGame:
                 character.draw_player_name(self.screen)
                 character.draw_health_bar(self.screen)
         
+        #region USER INPUT
         # Gestion des mouvements des personnages
         keys = pygame.key.get_pressed()
         current_character = self.players[self.current_player][self.current_character_index]
@@ -149,7 +150,8 @@ class WormsGame:
                     self.players[random_player_index][random_character_index].take_damage(damage)
                 
                 self.manager.process_events(event)
-        
+        #endregion
+
         self.manager.update(self.clock.tick(60) / 1000.0)
         self.manager.draw_ui(self.screen)
         pygame.display.flip()

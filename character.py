@@ -20,7 +20,8 @@ class Character:
         self.health -= damage  # Réduit la vie du personnage
         if self.health <= 0:
             self.health = 0  # Assure que la vie ne soit pas négative
-
+    
+    #region MOUVEMENT
     def apply_gravity(self, terrain):
         """Applique la gravité au personnage."""
         if not self.on_ground:  # Si le personnage n'est pas au sol
@@ -61,11 +62,13 @@ class Character:
             self.on_ground = False  # Le personnage est maintenant en l'air
 
     def update_position(self, x, y, terrain):
-        """Met à jour la position du personnage (non utilisé ici)."""
+        """Met à jour la position du personnage"""
         if not self.on_ground:
             terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
             self.y = terrain_height - self.radius  # Met à jour la position Y
+    #endregion
 
+    #region Affichage
     def draw(self, screen):
         """Dessine le personnage sur l'écran."""
         if self.health > 0:  # Vérifiez si le personnage est vivant
@@ -84,3 +87,4 @@ class Character:
             player_name = f"{self.health}"  # Crée le texte de la vie
             name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))  # Rendu du texte
             screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 30))  # Affiche le texte
+    #endregion
