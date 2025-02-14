@@ -42,20 +42,21 @@ class WormsGame:
         # Boucle de jeu
         self.running = True
         self.clock = pygame.time.Clock()
+        self.winner = None  # Variable pour stocker le vainqueur
     #endregion
     
     #region DEMANDE_NOMBRE_JOUEURS
     def ask_number_of_players(self):
         """
-        Demande à l'utilisateur d'entrer le nombre de joueurs (1-6) et le valide.
+        Demande à l'utilisateur d'entrer le nombre de joueurs (2-6) et le valide.
         """
         running = True
-        input_text = "1"
+        input_text = "2"
         color = (0, 0, 0)
         
         while running:
             self.screen.fill(settings.SKY_COLOR)
-            prompt_text = self.font.render(f"Entrez le nombre de joueurs (1-6): {input_text}", True, color)
+            prompt_text = self.font.render(f"Entrez le nombre de joueurs (2-6): {input_text}", True, color)
             self.screen.blit(prompt_text, (settings.WIDTH // 4, settings.HEIGHT // 2))
             
             for event in pygame.event.get():
@@ -64,7 +65,7 @@ class WormsGame:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_RETURN and input_text.isdigit():
                         num_players = int(input_text)
-                        if 1 <= num_players <= 6:
+                        if 2 <= num_players <= 6:  # Modifié pour accepter 2 à 6 joueurs
                             return num_players
                         else:
                             input_text = ""
@@ -76,7 +77,7 @@ class WormsGame:
             
             pygame.display.flip()
         
-        return 1
+        return 2  # Valeur par défaut
     #endregion
     
     #region INITIALISATION_JOUEURS
@@ -93,13 +94,30 @@ class WormsGame:
         return players
     #endregion
     
+    #region REINITIALISATION_DU_JEU
+    def reset_game(self):
+        """
+        Réinitialise l'état du jeu pour recommencer une nouvelle partie.
+        """
+        self.current_player = 0
+        self.current_character_index = 0
+        self.num_players = self.ask_number_of_players()
+        self.terrain = generate_terrain(settings.WIDTH, settings.HEIGHT, settings.MIN_HEIGHT, settings.MAX_HEIGHT)
+        self.terrain = create_random_craters(self.terrain, 20, settings.WIDTH)
+        self.players = self.initialize_players()
+        self.winner = None
+    #endregion
+
     #region BOUCLE_PRINCIPALE
     def start(self):
-        """
-        Démarre la boucle principale du jeu.
-        """
-        while self.running:
-            self.update()
+        """ Démarre la boucle principale du jeu. """
+        while True:  # Boucle infinie pour relancer le jeu
+            self.running = True  # Réinitialise l'état de la variable running
+            while self.running:
+                self.update()
+                self.check_game_over()  # Vérifie si la partie est terminée
+            self.display_winner()  # Affiche le vainqueur
+            self.reset_game()  # Réinitialise le jeu
     #endregion
     
     #region MISE_A_JOUR
@@ -128,7 +146,7 @@ class WormsGame:
         if keys[pygame.K_RIGHT] and current_character.x < settings.WIDTH - 1:
             current_character.move(1, self.terrain, settings.WIDTH)
         
-        # Gestion des événements clavier
+        # # Gestion des événements clavier
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -138,7 +156,7 @@ class WormsGame:
                 elif event.key == pygame.K_F5:
                     self.terrain = create_crater(self.terrain, random.randint(1, settings.WIDTH - 1), random.randint(25, 50))
                 elif event.key == pygame.K_RETURN:
-                    print("Tirer")
+                    print(" Tirer")
                 elif event.key == pygame.K_SPACE:
                     current_character.jump()
                 elif event.key == pygame.K_TAB:
@@ -157,7 +175,45 @@ class WormsGame:
         pygame.display.flip()
         self.clock.tick(60)
     #endregion
-    
+
+    #region VERIFICATION_FIN_DE_JEU
+    def check_game_over(self):
+        """
+        Vérifie si la partie est terminée et met à jour le vainqueur.
+        """
+        alive_players = [i for i, player in enumerate(self.players) if any(character.health > 0 for character in player)]
+        
+        if len(alive_players) == 1:
+            self.winner = alive_players[0] + 1  # Le joueur gagnant (1-indexé)
+            self.running = False  # Arrête le jeu
+    #endregion
+
+    #region AFFICHAGE_VAINQUEUR
+    def display_winner(self):
+        """ Affiche le vainqueur au centre de l'écran et attend que l'utilisateur appuie sur Entrée. """
+        self.screen.fill(settings.SKY_COLOR)
+        winner_text = f"Le Vainqueur est le Joueur {self.winner}!"
+        text_surface = self.font.render(winner_text, True, (255, 0, 0))
+        text_rect = text_surface.get_rect(center=(settings.WIDTH // 2, settings.HEIGHT // 2))
+        self.screen.blit(text_surface, text_rect)
+        pygame.display.flip()
+
+        waiting = True
+        while waiting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    waiting = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        waiting = False  # Sort de la boucle d'attente
+                        self.restart_game()  # Relance le jeu dans une nouvelle fenêtre
+    #endregion
+
+    def restart_game(self):
+        """ Relance le jeu dans une nouvelle fenêtre. """
+        pygame.quit()  # Ferme l'ancienne fenêtre
+        WormsGame().start()  # Crée une nouvelle instance et démarre le jeu
+
 if __name__ == "__main__":
     WormsGame().start()
     pygame.quit()

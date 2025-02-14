@@ -8,6 +8,7 @@ MAX_HEIGHT = 480  # Hauteur maximale (au centre de l'île)
 CRATER_NUMBER = 20  # Variation aléatoire
 
 CHARA_NUMBER = 2 # Nombre de personnage par joueur
+MAX_HEALTH = 50
 GRAVITY = 1.25 # Constante pour la gravité
 
 # Couleurs

@@ -12,7 +12,7 @@ class Character:
         self.move_start_time = None  # Temps de début du mouvement (non utilisé ici)
         self.color = color  # Couleur du personnage
         self.radius = 15  # Rayon du personnage (taille)
-        self.health = 150  # Vie initiale du personnage
+        self.health = settings.MAX_HEALTH  # Vie initiale du personnage
         self.player_number = player_number  # Numéro du joueur (1, 2, etc.)
 
     def take_damage(self, damage):
