@@ -15,6 +15,11 @@ class Character:
         self.health = 150  # Vie initiale
         self.player_number = player_number  # Numéro du joueur (1, 2, etc.)
 
+    def take_damage(self, damage):
+        self.health -= damage
+        if self.health <= 0:
+            self.health = 0
+
     def apply_gravity(self, terrain):
         if not self.on_ground:
             self.vel_y += settings.GRAVITY
@@ -57,15 +62,17 @@ class Character:
             self.y = terrain_height - self.radius
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)),
-                           self.radius)  # Dessin du personnage avec le rayon
+        if self.health > 0:  # Vérifiez si le personnage est vivant
+            pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)  # Dessin du personnage avec le rayon
 
     def draw_player_name(self, screen):
-        player_name = f"Player {self.player_number}"
-        name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
-        screen.blit(name_text, (self.x - self.radius - 15, self.y - self.radius - 60))
+        if self.health > 0:  # Vérifiez si le personnage est vivant
+            player_name = f"Player {self.player_number}"
+            name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
+            screen.blit(name_text, (self.x - self.radius - 15, self.y - self.radius - 60))
     
     def draw_health_bar(self, screen):
-        player_name = f"{self.health}"
-        name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
-        screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 30))
+        if self.health > 0:  # Vérifiez si le personnage est vivant
+            player_name = f"{self.health}"
+            name_text = pygame.font.SysFont("Arial", 18).render(player_name, True, (0, 0, 0))
+            screen.blit(name_text, (self.x - self.radius, self.y - self.radius - 30))

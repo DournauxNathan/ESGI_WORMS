@@ -142,8 +142,11 @@ class WormsGame:
                     current_character.jump()
                 elif event.key == pygame.K_TAB:
                     self.current_character_index = (self.current_character_index + 1) % len(self.players[self.current_player])
-                elif event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
-                    self.inventory.select_weapon(int(event.unicode) - 1)
+                elif event.key == pygame.K_F1:  # Choisir un personnage aléatoire pour infliger des dégâts
+                    random_player_index = random.randint(0, self.num_players - 1)
+                    random_character_index = random.randint(0, len(self.players[random_player_index]) - 1)
+                    damage = random.randint(5, 20)  # Dégâts aléatoires entre 5 et 20
+                    self.players[random_player_index][random_character_index].take_damage(damage)
                 
                 self.manager.process_events(event)
         

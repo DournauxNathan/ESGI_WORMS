@@ -30,6 +30,8 @@ def generate_terrain(width, height, min_height, max_height):
 
     return terrain  # Renvoie la liste des hauteurs
 
+
+# Permet d'apporté de l'irrégularite au terrain
 def create_random_craters(terrain, num_craters, width):
     for _ in range(num_craters):
         # Choisir une position aléatoire sur le terrain
@@ -37,7 +39,7 @@ def create_random_craters(terrain, num_craters, width):
         radius = random.randint(50, 75)  # Rayon aléatoire pour le cratère
         terrain = create_crater(terrain, x, radius)  # Créer le cratère
 
-    return terrain
+    return terrain # Renvoie le terrain modifié
 
 def draw_terrain(screen, terrain, height):
     """
@@ -77,35 +79,3 @@ def create_crater(terrain, x, radius):
             terrain[i] = max(terrain[i] + depth, 0)  # On déforme vers le bas (le terrain "descend")
 
     return terrain  # Renvoie le terrain modifié
-
-# Pseudo-code
-"""
-Fonction generate_terrain(width, height, min_height, max_height):
-    Créer une liste terrain vide
-    Calculer le centre du terrain (center = width // 2)
-    
-    Pour chaque position x dans le terrain :
-        Calculer la distance du centre à la position x (distance = abs(x - center))
-        Calculer la hauteur de base en fonction de la distance (base_height)
-        Inverser la hauteur pour correspondre à la position dans le système de coordonnées
-        Ajouter la hauteur inversée dans la liste terrain
-    
-    Retourner la liste terrain
-
-Fonction draw_terrain(screen, terrain, height):
-    Définir la couleur du terrain (terrain_color = (34, 139, 34))  # Vert foncé
-    
-    Pour chaque position x dans terrain :
-        Dessiner une ligne verticale à la position (x, terrain[x]) jusqu'à (x, height)
-        Cela représente le terrain comme une ligne de pixels allant du haut au bas de l'écran
-
-Fonction create_crater(terrain, x, radius):
-    Pour chaque position i autour de x (de x - radius à x + radius) :
-        Calculer la distance horizontale par rapport au centre du cratère (distance = abs(i - x))
-        
-        Si la distance est inférieure au rayon (distance < radius) :
-            Calculer la profondeur du cratère en fonction de la distance (depth = (radius - distance) ^ 0.87)
-            Appliquer la profondeur au terrain à la position i, en s'assurant de ne pas dépasser la hauteur 0
-    
-    Retourner le terrain modifié
-"""
