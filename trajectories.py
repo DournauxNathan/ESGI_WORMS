@@ -20,9 +20,9 @@ class roquette(object):
         pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
 
     @staticmethod
-    def air_resistance(v, r, Cd=0.1, rho=1.225):
-        A = numpy.pi * r**2
-        return 0.5 * Cd * rho * A * v**2
+    def air_resistance(v, r, Cd=0.4, rho=1.225):
+        S = numpy.pi * r**2 /2  #surface d'un demi cercle
+        return 0.5 * Cd * rho * S * v**2
 
     @staticmethod
     def ballPath(startx, starty, power, ang, time, mass = 1, r = 0.1):
@@ -39,7 +39,6 @@ class roquette(object):
 
         velx += ax * time
         vely += ay * time
-
         distX = velx * time
         distY = (vely * time)
         newx = round(distX + startx)
@@ -70,7 +69,7 @@ class roquette(object):
             angle = (math.pi * 2) - angle
         return angle
 
-
+#_______________________________________________________________________________________________________________________________________________________
 class grenade(object):
     def __init__(self,x,y,radius,color):
         self.x = x
