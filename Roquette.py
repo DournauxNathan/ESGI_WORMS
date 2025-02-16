@@ -1,11 +1,11 @@
 import pygame
 import math
-import scipy
-import matplotlib
 import numpy
 
+from terrain import generate_terrain, create_random_craters, draw_terrain, create_crater
+
 class Roquette(object):
-    def __init__(self,x,y,radius,color):
+    def __init__(self, x, y, radius, color):
         self.x = x
         self.y = y
         self.power = 0
@@ -13,25 +13,27 @@ class Roquette(object):
         self.time = 0
         self.radius = radius
         self.color = color
-        
+        self.on_ground = False  # État pour savoir si la roquette est au sol
+
     def draw(self, win):
-        pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
-        pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
+        if not self.on_ground:  # Ne dessinez que si la roquette n'est pas au sol
+            pygame.draw.circle(win, (0, 0, 0), (self.x, self.y), self.radius)
+            pygame.draw.circle(win, self.color, (self.x, self.y), self.radius - 1)
 
     @staticmethod
     def air_resistance(v, r, Cd=0.1, rho=1.225):
-        S = numpy.pi * r**2 /2  #surface d'un demi cercle
+        S = numpy.pi * r**2 / 2  # surface d'un demi cercle
         return 0.5 * Cd * rho * S * v**2
 
     @staticmethod
-    def ballPath(startx, starty, power, ang, time, mass = 1, r = 0.1):
+    def ballPath(startx, starty, power, ang, time, mass=1, r=0.1):
         velx = numpy.cos(ang) * power
         vely = math.sin(ang) * power
         v = numpy.sqrt(velx ** 2 + vely ** 2)
         Fd = Roquette.air_resistance(v, r)
-        if v > 0 :
-            ax = - (Fd / mass) * (velx / v) /7
-            ay = - (Fd / mass) * (vely / v) /4 - 2.81
+        if v > 0:
+            ax = - (Fd / mass) * (velx / v) / 7
+            ay = - (Fd / mass) * (vely / v) / 4 - 2.81
         else:
             ax = 0
             ay = -2.81
@@ -61,26 +63,18 @@ class Roquette(object):
             angle = (math.pi * 2) - angle
         return angle
     
-    def move(self, terrain):
-        if self.y < 500 - self.radius:
-                self.time += 0.05
-                po = self.ballPath(self.x, self.y, self.power, self.angle, self.time)
-                self.x = po[0]
-                self.y = po[1]
-        else:
-            shoot = False
-            self.time = 0
-            self.y = 494
-        
-def air_resistance(v, r, Cd=0.1, rho=1.225):
-    """
-    Calcule la force de résistance de l'air sur une sphère en mouvement.
+    def move(self, terrain):  
+        if not self.on_ground:  # Ne mettez à jour que si la roquette n'est pas au sol
+            self.time += 0.05
+            po = self.ballPath(self.x, self.y, self.power, self.angle, self.time)
+            self.x = po[0]
+            self.y = po[1]
 
-    :param v: Vitesse de l'objet (m/s)
-    :param r: Rayon de l'objet (m)
-    :param Cd: Coefficient de traînée (par défaut 0.04 pour un corps profilé)
-    :param rho: Densité de l'air (kg/m^3, par défaut 1.225 au niveau de la mer)
-    :return: Force de traînée (N)
-    """
-    A = numpy.pi * r ** 2  # Aire frontale de la sphère
-    return 0.5 * Cd * rho * A * v ** 2
+            # Vérifiez si la roquette touche le terrain
+            terrain_x = int(self.x)
+            if 0 <= terrain_x < len(terrain):
+                terrain_height = terrain[terrain_x]
+                if self.y >= terrain_height - self.radius:  # Collision avec le sol
+                    self.y = terrain_height - self.radius
+                    self.on_ground = True  # La roquette est maintenant au sol
+                    terrain[:] = create_crater(terrain, terrain_x, 25)  # Mise à jour du terrain

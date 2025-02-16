@@ -188,7 +188,7 @@ class WormsGame:
                         self.grenade_instance = Grenade.Grenade(current_character.x, current_character.y, 5, (255, 0, 0))
                         mousePos = pygame.mouse.get_pos()
                         self.grenade_instance.power = math.sqrt((mousePos[1] - self.grenade_instance.y) ** 2 + (mousePos[0] - self.grenade_instance.x) ** 2)    
-                        self.grenade_instance.angle = self.grenade_instance.findAngle( self.grenade_instance.x, self.grenade_instance.y)
+                        self.grenade_instance.angle = self.grenade_instance.findAngle(mousePos, self.grenade_instance.x, self.grenade_instance.y)
                         self.grenade_instance.velx = math.cos(self.grenade_instance.angle) *  self.grenade_instance.power
                         self.grenade_instance.vely = math.sin(self.grenade_instance.angle) *  self.grenade_instance.power
                         
@@ -219,12 +219,13 @@ class WormsGame:
             if current_character.has_shoot :
                 current_character.has_shoot = False
 
-        if not self.grenade_instance == None:
-            self.grenade_instance.move(self.terrain)
-            self.grenade_instance.draw(self.screen)
+        if self.grenade_instance:
+            delta_time = self.clock.tick(60) / 1000.0  # Temps écoulé depuis la dernière image
+            self.grenade_instance.move(self.terrain, delta_time)  # Mettez à jour la position de la grenade
+            self.grenade_instance.draw(self.screen)  # Dessinez la grenade
+
             if current_character.has_shoot :
                 current_character.has_shoot = False
-
 
         self.manager.update(self.clock.tick(60) / 1000.0)
         self.manager.draw_ui(self.screen)
