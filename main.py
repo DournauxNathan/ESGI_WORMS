@@ -1,9 +1,12 @@
+import threading
+
 import pygame
 import random
 import numpy as np
 import math
 import settings
 import pygame_gui
+import time
 from character import Character
 from terrain import generate_terrain, create_random_craters, draw_terrain, create_crater
 from inventory import Inventory
@@ -14,6 +17,7 @@ class WormsGame:
         """
         Initialisation du jeu : Pygame, écran, terrain, joueurs, interface et boucle de jeu.
         """
+        self.timer = None
         pygame.init()
         
         # Initialisation de l'écran
@@ -34,6 +38,10 @@ class WormsGame:
         
         # Initialisation des joueurs
         self.players = self.initialize_players()
+
+        #Index des joueurs restants
+        self.remaining = [i for i, player in enumerate(self.players) if any(character.health > 0 for character in player)]
+        self.remaining_time = 30
         
         # Gestion de l'interface et de l'inventaire
         self.manager = pygame_gui.UIManager((settings.WIDTH, settings.HEIGHT))
@@ -43,6 +51,7 @@ class WormsGame:
         self.running = True
         self.clock = pygame.time.Clock()
         self.winner = None  # Variable pour stocker le vainqueur
+
     #endregion
     
     #region DEMANDE_NOMBRE_JOUEURS
@@ -112,10 +121,12 @@ class WormsGame:
     def start(self):
         """ Démarre la boucle principale du jeu. """
         self.running = True  # Réinitialise l'état de la variable running
+ #gestion du temps automatique
         while True:  # Boucle infinie pour relancer le jeu
             while self.running:
                 self.update()
                 self.check_game_over()  # Vérifie si la partie est terminée
+
             
             if self.winner is not None:  # Afficher le vainqueur seulement si un joueur a gagné
                 self.display_winner()
@@ -186,6 +197,8 @@ class WormsGame:
                     random_character_index = random.randint(0, len(self.players[random_player_index]) - 1)
                     damage = random.randint(5, 20)  # Dégâts aléatoires entre 5 et 20
                     self.players[random_player_index][random_character_index].take_damage(damage)
+                elif event.key == pygame.K_F8:
+                    self.turn_timer()
                 
                 self.manager.process_events(event)
         #endregion
@@ -202,10 +215,15 @@ class WormsGame:
         Vérifie si la partie est terminée et met à jour le vainqueur.
         """
         alive_players = [i for i, player in enumerate(self.players) if any(character.health > 0 for character in player)]
-        
+
+        # added by kat
+        self.remaining = alive_players.copy()
+
+
         if len(alive_players) == 1:
             self.winner = alive_players[0] + 1  # Le joueur gagnant (1-indexé)
             self.running = False  # Arrête le jeu
+
     #endregion
 
     #region AFFICHAGE_VAINQUEUR
@@ -233,6 +251,30 @@ class WormsGame:
         """ Relance le jeu dans une nouvelle fenêtre. """
         pygame.quit()  # Ferme l'ancienne fenêtre
         WormsGame().start()  # Crée une nouvelle instance et démarre le jeu
+
+    def check_alive(self):
+        indexer = self.current_player
+        if self.current_player not in self.remaining:
+            print(f"player {indexer} is not playing anymore")
+            for i in range(self.current_player, self.num_players):
+                if i in self.remaining:
+                    indexer = i
+                    break
+
+        self.current_player = indexer
+
+    #tourpartour
+    def turn_timer(self):
+        self.check_alive()
+        if self.remaining:
+            index = self.remaining.index(self.current_player)
+            self.current_player = self.remaining[(index + 1) % len(self.remaining)]
+        self.update()
+
+
+
+
+
 
 if __name__ == "__main__":
     WormsGame().start()
