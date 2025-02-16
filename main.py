@@ -7,6 +7,7 @@ import pygame_gui
 from character import Character
 from terrain import generate_terrain, create_random_craters, draw_terrain, create_crater
 from inventory import Inventory
+import trajectories
 
 class WormsGame:
     #region INITIALISATION
@@ -43,6 +44,13 @@ class WormsGame:
         self.running = True
         self.clock = pygame.time.Clock()
         self.winner = None  # Variable pour stocker le vainqueur
+        
+        # Variables pour la roquette
+        self.roquette_instance = None  # Instance de la roquette
+        self.shoot = False  # État de tir
+        self.time = 0  # Temps pour le mouvement de la roquette
+        self.power = 0  # Puissance de tir
+        self.angle = 0  # Angle de tir
     #endregion
     
     #region DEMANDE_NOMBRE_JOUEURS
@@ -163,7 +171,6 @@ class WormsGame:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    print("STOP THE GAME")
                     self.running = False
                 elif event.key == pygame.K_F4:
                     self.current_player = (self.current_player + 1) % self.num_players
@@ -176,7 +183,11 @@ class WormsGame:
                 elif event.key == pygame.K_3:
                     self.inventory.current_weapon_index = 2
                 elif event.key == pygame.K_RETURN:
-                    print(" Tirer")
+                    if self.inventory.current_weapon_index == 1: 
+                        Roquette = trajectories.roquette(current_character.x, current_character.y, 5, (255, 0, 0))
+                        mousePos = pygame.mouse.get_pos()
+                        Roquette.power = math.sqrt((pos[1] - self.roquette_instance.y) ** 2 + (pos[0] - self.roquette_instance.x) ** 2)
+                        Roquette.angle = Roquette.findAngle(pos, self.roquette_instance.x, self.roquette_instance.y)
                 elif event.key == pygame.K_SPACE:
                     current_character.jump()
                 elif event.key == pygame.K_TAB:
@@ -190,10 +201,39 @@ class WormsGame:
                 self.manager.process_events(event)
         #endregion
 
+        # Mettre à jour la roquette si elle existe
+        if self.roquette_instance :
+            self.roquette_instance.update()
+            if not self.roquette_instance.shoot:
+                self.roquette_instance = None  # Réinitialiser l'instance de la roquette si elle a touché le sol
+
+        # Dessiner la roquette si elle existe
+        if self.roquette_instance:
+            self.roquette_instance.draw(self.screen)
+        if self.inventory.current_weapon_index == 1:
+            # Dessiner une ligne en pointillés entre la roquette et le curseur
+            self.draw_dashed_line(current_character.x, current_character.y, pygame.mouse.get_pos())
+
         self.manager.update(self.clock.tick(60) / 1000.0)
         self.manager.draw_ui(self.screen)
         pygame.display.flip()
         self.clock.tick(60)
+    #endregion
+
+    #region 
+    def draw_dashed_line(self, start_x, start_y, end_pos, dash_length=5):
+        """ Dessine une ligne en pointillés entre deux points. """
+        # Calculer la distance et l'angle
+        distance = math.hypot(end_pos[0] - start_x, end_pos[1] - start_y)
+        angle = math.atan2(end_pos[1] - start_y, end_pos[0] - start_x)
+
+        # Dessiner des segments de ligne
+        for i in range(0, int(distance), dash_length * 2):
+            start_segment_x = start_x + math.cos(angle) * i
+            start_segment_y = start_y + math.sin(angle) * i
+            end_segment_x = start_x + math.cos(angle) * (i + dash_length)
+            end_segment_y = start_y + math.sin(angle) * (i + dash_length)
+            pygame.draw.line(self.screen, (0, 0, 0), (start_segment_x, start_segment_y), (end_segment_x, end_segment_y), 2)
     #endregion
 
     #region VERIFICATION_FIN_DE_JEU
