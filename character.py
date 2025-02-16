@@ -9,6 +9,7 @@ class Character:
         self.vel_x = 0  # Vitesse horizontale du personnage
         self.vel_y = 0  # Vitesse verticale du personnage
         self.on_ground = False  # Indique si le personnage est au sol
+        self.has_shoot = False # Indique si le personnage a tirée
         self.move_start_time = None  # Temps de début du mouvement (non utilisé ici)
         self.color = color  # Couleur du personnage
         self.radius = 15  # Rayon du personnage (taille)

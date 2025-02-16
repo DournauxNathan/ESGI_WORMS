@@ -7,7 +7,7 @@ import pygame_gui
 from character import Character
 from terrain import generate_terrain, create_random_craters, draw_terrain, create_crater
 from inventory import Inventory
-import trajectories
+import Roquette, Grenade 
 
 class WormsGame:
     #region INITIALISATION
@@ -44,13 +44,8 @@ class WormsGame:
         self.running = True
         self.clock = pygame.time.Clock()
         self.winner = None  # Variable pour stocker le vainqueur
-        
-        # Variables pour la roquette
-        self.roquette_instance = None  # Instance de la roquette
-        self.shoot = False  # État de tir
-        self.time = 0  # Temps pour le mouvement de la roquette
-        self.power = 0  # Puissance de tir
-        self.angle = 0  # Angle de tir
+        self.roquette_instance = None
+        self.grenade_instance = None
     #endregion
     
     #region DEMANDE_NOMBRE_JOUEURS
@@ -141,9 +136,7 @@ class WormsGame:
     
     #region MISE_A_JOUR
     def update(self):
-        """
-        Met à jour l'état du jeu, gère les entrées et affiche les éléments.
-        """
+        """ Met à jour l'état du jeu, gère les entrées et affiche les éléments. """
         self.screen.fill(settings.SKY_COLOR)
         draw_terrain(self.screen, self.terrain, settings.HEIGHT)
         self.inventory.draw(self.screen)
@@ -182,12 +175,27 @@ class WormsGame:
                     self.inventory.current_weapon_index = 1
                 elif event.key == pygame.K_3:
                     self.inventory.current_weapon_index = 2
-                elif event.key == pygame.K_RETURN:
+                
+                elif event.key == pygame.K_RETURN and not current_character.has_shoot:
                     if self.inventory.current_weapon_index == 1: 
-                        Roquette = trajectories.roquette(current_character.x, current_character.y, 5, (255, 0, 0))
+                        self.roquette_instance = Roquette.Roquette(current_character.x, current_character.y, 5, (255, 0, 0))
                         mousePos = pygame.mouse.get_pos()
-                        Roquette.power = math.sqrt((pos[1] - self.roquette_instance.y) ** 2 + (pos[0] - self.roquette_instance.x) ** 2)
-                        Roquette.angle = Roquette.findAngle(pos, self.roquette_instance.x, self.roquette_instance.y)
+                        self.roquette_instance.power = math.sqrt((mousePos[1] - self.roquette_instance.y) ** 2 + (mousePos[0] - self.roquette_instance.x) ** 2)    
+                        self.roquette_instance.angle = self.roquette_instance.findAngle(mousePos)
+                        print(f" \n Roquette tirée, avec :\n - une puissance de {self.roquette_instance.power} \n - Un angle de {self.roquette_instance.angle} \n")
+                    
+                    elif self.inventory.current_weapon_index == 2: 
+                        self.grenade_instance = Grenade.Grenade(current_character.x, current_character.y, 5, (255, 0, 0))
+                        mousePos = pygame.mouse.get_pos()
+                        self.grenade_instance.power = math.sqrt((mousePos[1] - self.grenade_instance.y) ** 2 + (mousePos[0] - self.grenade_instance.x) ** 2)    
+                        self.grenade_instance.angle = self.grenade_instance.findAngle( self.grenade_instance.x, self.grenade_instance.y)
+                        self.grenade_instance.velx = math.cos(self.grenade_instance.angle) *  self.grenade_instance.power
+                        self.grenade_instance.vely = math.sin(self.grenade_instance.angle) *  self.grenade_instance.power
+                        
+                        print(f" \n Grenade lancée, avec :\n - une puissance de {self.grenade_instance.power} \n - Un angle de {self.grenade_instance.angle} \n")
+                        print(f"- Velocité[{self.grenade_instance.velx}, {self.grenade_instance.vely}]")
+                    current_character.has_shoot = True
+                
                 elif event.key == pygame.K_SPACE:
                     current_character.jump()
                 elif event.key == pygame.K_TAB:
@@ -197,22 +205,26 @@ class WormsGame:
                     random_character_index = random.randint(0, len(self.players[random_player_index]) - 1)
                     damage = random.randint(5, 20)  # Dégâts aléatoires entre 5 et 20
                     self.players[random_player_index][random_character_index].take_damage(damage)
-                
+
                 self.manager.process_events(event)
         #endregion
-
-        # Mettre à jour la roquette si elle existe
-        if self.roquette_instance :
-            self.roquette_instance.update()
-            if not self.roquette_instance.shoot:
-                self.roquette_instance = None  # Réinitialiser l'instance de la roquette si elle a touché le sol
-
-        # Dessiner la roquette si elle existe
-        if self.roquette_instance:
-            self.roquette_instance.draw(self.screen)
-        if self.inventory.current_weapon_index == 1:
+        
+        if self.inventory.current_weapon_index == 1 or self.inventory.current_weapon_index == 2:
             # Dessiner une ligne en pointillés entre la roquette et le curseur
             self.draw_dashed_line(current_character.x, current_character.y, pygame.mouse.get_pos())
+
+        if not self.roquette_instance == None:
+            self.roquette_instance.move(self.terrain)
+            self.roquette_instance.draw(self.screen)
+            if current_character.has_shoot :
+                current_character.has_shoot = False
+
+        if not self.grenade_instance == None:
+            self.grenade_instance.move(self.terrain)
+            self.grenade_instance.draw(self.screen)
+            if current_character.has_shoot :
+                current_character.has_shoot = False
+
 
         self.manager.update(self.clock.tick(60) / 1000.0)
         self.manager.draw_ui(self.screen)

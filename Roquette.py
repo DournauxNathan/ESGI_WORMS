@@ -4,17 +4,16 @@ import scipy
 import matplotlib
 import numpy
 
-wScreen = 1200
-hScreen = 500
-
-win = pygame.display.set_mode((wScreen,hScreen))
-
-class roquette(object):
+class Roquette(object):
     def __init__(self,x,y,radius,color):
         self.x = x
         self.y = y
+        self.power = 0
+        self.angle = 0
+        self.time = 0
         self.radius = radius
         self.color = color
+        
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
         pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
@@ -29,7 +28,7 @@ class roquette(object):
         velx = numpy.cos(ang) * power
         vely = math.sin(ang) * power
         v = numpy.sqrt(velx ** 2 + vely ** 2)
-        Fd = roquette.air_resistance(v, r)
+        Fd = Roquette.air_resistance(v, r)
         if v > 0 :
             ax = - (Fd / mass) * (velx / v) /7
             ay = - (Fd / mass) * (vely / v) /4 - 2.81
@@ -45,15 +44,9 @@ class roquette(object):
         newy = round(starty - distY)
         return (newx, newy)
 
-    def redrawWindow():
-        win.fill((64, 64, 64))
-        Roquette.draw(win)
-        pygame.draw.line(win, (0, 0, 0), line[0], line[1])
-        pygame.display.update()
-
-    def findAngle(pos):
-        sX = Roquette.x
-        sY = Roquette.y
+    def findAngle(self, pos):
+        sX = self.x
+        sY = self.y
         try:
             angle = math.atan((sY - pos[1]) / (sX - pos[0]))
         except:
@@ -67,10 +60,18 @@ class roquette(object):
         elif pos[1] > sY and pos[0] > sX:
             angle = (math.pi * 2) - angle
         return angle
-
-Roquette = roquette(300, 494, 5, (255, 255, 255))
-
-
+    
+    def move(self, terrain):
+        if self.y < 500 - self.radius:
+                self.time += 0.05
+                po = self.ballPath(self.x, self.y, self.power, self.angle, self.time)
+                self.x = po[0]
+                self.y = po[1]
+        else:
+            shoot = False
+            self.time = 0
+            self.y = 494
+        
 def air_resistance(v, r, Cd=0.1, rho=1.225):
     """
     Calcule la force de résistance de l'air sur une sphère en mouvement.
@@ -83,42 +84,3 @@ def air_resistance(v, r, Cd=0.1, rho=1.225):
     """
     A = numpy.pi * r ** 2  # Aire frontale de la sphère
     return 0.5 * Cd * rho * A * v ** 2
-
-run = True
-time = 0
-power = 0
-angle = 0
-
-
-shoot = False
-clock = pygame.time.Clock()
-while run:
-    clock.tick(200)
-    if shoot:
-        if Roquette.y < 500 - Roquette.radius:
-            time += 0.05
-            po = Roquette.ballPath(x, y, power, angle, time)
-            Roquette.x = po[0]
-            Roquette.y = po[1]
-        else:
-            shoot = False
-            time = 0
-            Roquette.y = 494
-
-    line = [(Roquette.x, Roquette.y), pygame.mouse.get_pos()]
-    roquette.redrawWindow()
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            run = False
-
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if not shoot:
-                x = Roquette.x
-                y = Roquette.y
-                pos = pygame.mouse.get_pos()
-                shoot = True
-                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)/4
-                angle = roquette.findAngle(pos)
-
-pygame.quit()
