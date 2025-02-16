@@ -15,6 +15,7 @@ class Grenade(object):
         self.power = 0
         self.angle = 0
         self.time = 0
+        self.on_ground = False
         self.restitution = 0.6  # Facteur de restitution pour le rebond
 
     def draw(self, win):
@@ -69,8 +70,19 @@ class Grenade(object):
             angle = math.pi / 2
         return angle
     
-    def move(self, terrain):
-        self.x, self.y, self.velx, self.vely = Grenade.ballPath(self.x, self.y, self.velx, self.vely, 0.05)
+    def move(self, terrain):  
+        if self.y is not terrain[int(self.x)]:
+            self.x, new_y, self.velx, self.vely = Grenade.ballPath(self.x, self.y, self.velx, self.vely, 0.05)
+            
+            terrain_x = int(self.x)  
+            if 0 <= terrain_x < len(terrain):  
+                terrain_height = terrain[terrain_x]  
+                if new_y >= terrain_height - self.radius:  
+                    self.y = terrain_height - self.radius  
+                    self.vely = 0 
+                    self.on_ground = True  
+                else:
+                    self.y = new_y  # Met à jour la position Y
         
         """
         terrain_height = terrain[int(self.x)]  # Hauteur du terrain à la position x
