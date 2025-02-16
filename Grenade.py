@@ -16,30 +16,40 @@ class grenade(object):
         self.y = y
         self.radius = radius
         self.color = color
+        self.velx = 0
+        self.vely = 0
+        self.restitution = 0.6  # Facteur de restitution pour le rebond
+
     def draw(self, win):
         pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
         pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
 
 
     @staticmethod
-    def ballPath(startx, starty, power, ang, time, mass=1, r=0.1):
-        velx = (math.cos(ang) * power)
-        vely = math.sin(ang) * power
+    def ballPath(startx, starty, velx, vely, time, mass=1, r=0.1):
         v = numpy.sqrt(velx ** 2 + vely ** 2)
         Fd = grenade.air_resistance(v, r)
         if v > 0:
             ax = - (Fd / mass) * (velx / v) / 7
-            ay = - (Fd / mass) * (vely / v) / 4 - 2.81
+            ay = - (Fd / mass) * (vely / v) / 4 - 9.81
         else:
             ax = 0
             ay = -9.81
-        velx += ax*time
-        vely += ax*time
-        distX = velx * time
-        distY = (vely * time) + ((-9.8 * (time * time)) / 2)
-        newx = round(distX + startx)
-        newy = round(starty - distY)
-        return (newx, newy)
+
+        velx += ax * time
+        vely += ay * time
+
+        newx = startx + velx * time
+        newy = starty - vely * time
+
+        if newy >= 500 - 5:
+            newy = 500 - 5
+            vely = -vely * 0.6  # Rebond
+            if abs(vely) < 1:  # Arrêt du rebond si vitesse trop faible
+                vely = 0
+                velx = 0
+
+        return newx, newy, velx, vely
 
     @staticmethod
     def air_resistance(v, r, Cz=0.094, rho=1.225):
@@ -79,15 +89,10 @@ clock = pygame.time.Clock()
 while run:
     clock.tick(200)
     if shoot:
-        if grenadeBall.y < 500 - grenadeBall.radius:
-            time += 0.05
-            po = grenadeBall.ballPath(x, y, power, angle, time)
-            grenadeBall.x = po[0]
-            grenadeBall.y = po[1]
-        else:
-            shoot = False
-            time = 0
-            grenadeBall.y = 494
+        if shoot:
+            grenadeBall.x, grenadeBall.y, velx, vely = grenade.ballPath(grenadeBall.x, grenadeBall.y, velx, vely, 0.05)
+            if vely == 0 and velx == 0:
+                shoot = False
 
     line = [(grenadeBall.x, grenadeBall.y), pygame.mouse.get_pos()]
     grenade.redrawWindow()
@@ -98,11 +103,11 @@ while run:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if not shoot:
-                x = grenadeBall.x
-                y = grenadeBall.y
                 pos = pygame.mouse.get_pos()
                 shoot = True
-                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)/8
+                power = math.sqrt((line[1][1] - line[0][1]) ** 2 + (line[1][0] - line[0][0]) ** 2) / 8
                 angle = grenade.findAngle(pos, grenadeBall.x, grenadeBall.y)
+                velx = math.cos(angle) * power
+                vely = math.sin(angle) * power
 
 pygame.quit()

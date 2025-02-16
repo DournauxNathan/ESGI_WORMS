@@ -58,7 +58,6 @@ class roquette(object):
             angle = math.atan((sY - pos[1]) / (sX - pos[0]))
         except:
             angle = math.pi / 2
-
         if pos[1] < sY and pos[0] > sX:
             angle = abs(angle)
         elif pos[1] < sY and pos[0] < sX:
@@ -72,13 +71,13 @@ class roquette(object):
 Roquette = roquette(300, 494, 5, (255, 255, 255))
 
 
-def air_resistance(v, r, Cd=0.47, rho=1.225):
+def air_resistance(v, r, Cd=0.1, rho=1.225):
     """
     Calcule la force de résistance de l'air sur une sphère en mouvement.
 
     :param v: Vitesse de l'objet (m/s)
     :param r: Rayon de l'objet (m)
-    :param Cd: Coefficient de traînée (par défaut 0.47 pour une sphère)
+    :param Cd: Coefficient de traînée (par défaut 0.04 pour un corps profilé)
     :param rho: Densité de l'air (kg/m^3, par défaut 1.225 au niveau de la mer)
     :return: Force de traînée (N)
     """
@@ -119,7 +118,7 @@ while run:
                 y = Roquette.y
                 pos = pygame.mouse.get_pos()
                 shoot = True
-                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)
+                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)/4
                 angle = roquette.findAngle(pos)
 
 pygame.quit()
