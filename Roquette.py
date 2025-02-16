@@ -119,7 +119,7 @@ while run:
                 y = Roquette.y
                 pos = pygame.mouse.get_pos()
                 shoot = True
-                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][1])**2)
+                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)
                 angle = roquette.findAngle(pos)
 
 pygame.quit()
