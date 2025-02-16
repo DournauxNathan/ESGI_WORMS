@@ -20,7 +20,7 @@ class roquette(object):
         pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
 
     @staticmethod
-    def air_resistance(v, r, Cd=0.4, rho=1.225):
+    def air_resistance(v, r, Cd=0.1, rho=1.225):
         S = numpy.pi * r**2 /2  #surface d'un demi cercle
         return 0.5 * Cd * rho * S * v**2
 
@@ -58,7 +58,6 @@ class roquette(object):
             angle = math.atan((sY - pos[1]) / (sX - pos[0]))
         except:
             angle = math.pi / 2
-
         if pos[1] < sY and pos[0] > sX:
             angle = abs(angle)
         elif pos[1] < sY and pos[0] < sX:
@@ -69,62 +68,16 @@ class roquette(object):
             angle = (math.pi * 2) - angle
         return angle
 
-#_______________________________________________________________________________________________________________________________________________________
-class grenade(object):
-    def __init__(self,x,y,radius,color):
-        self.x = x
-        self.y = y
-        self.radius = radius
-        self.color = color
-    def draw(self, win):
-        pygame.draw.circle(win, (0,0,0), (self.x,self.y), self.radius)
-        pygame.draw.circle(win, self.color, (self.x,self.y), self.radius-1)
-
-    @staticmethod
-    def ballPath(startx, starty, power, ang, time):
-        velx = (math.cos(ang) * power)
-        vely = math.sin(ang) * power
-        distX = velx * time
-        distY = (vely * time) + ((-9.8 * (time * time)) / 2)
-        newx = round(distX + startx)
-        newy = round(starty - distY)
-        return (newx, newy)
-    def redrawWindow():
-        win.fill((64,64,64))
-        grenadeBall.draw(win)
-        pygame.draw.line(win, (0,0,0),line[0], line[1])
-        pygame.display.update()
-
-    def findAngle(pos):
-        sX = grenadeBall.x
-        sY = grenadeBall.y
-        try:
-            angle = math.atan((sY - pos[1]) / (sX - pos[0]))
-        except:
-            angle = math.pi / 2
-
-        if pos[1] < sY and pos[0] > sX:
-            angle = abs(angle)
-        elif pos[1] < sY and pos[0] < sX:
-            angle = math.pi - angle
-        elif pos[1] > sY and pos[0] < sX:
-            angle = math.pi + abs(angle)
-        elif pos[1] > sY and pos[0] > sX:
-            angle = (math.pi * 2) - angle
-
-        return angle
-
-grenadeBall = grenade(300, 494, 5, (255, 255, 255))
 Roquette = roquette(300, 494, 5, (255, 255, 255))
 
 
-def air_resistance(v, r, Cd=0.47, rho=1.225):
+def air_resistance(v, r, Cd=0.1, rho=1.225):
     """
     Calcule la force de résistance de l'air sur une sphère en mouvement.
 
     :param v: Vitesse de l'objet (m/s)
     :param r: Rayon de l'objet (m)
-    :param Cd: Coefficient de traînée (par défaut 0.47 pour une sphère)
+    :param Cd: Coefficient de traînée (par défaut 0.04 pour un corps profilé)
     :param rho: Densité de l'air (kg/m^3, par défaut 1.225 au niveau de la mer)
     :return: Force de traînée (N)
     """
@@ -165,7 +118,7 @@ while run:
                 y = Roquette.y
                 pos = pygame.mouse.get_pos()
                 shoot = True
-                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][1])**2)
+                power = math.sqrt((line[1][1]-line[0][1])**2 +(line[1][0]-line[0][0])**2)/4
                 angle = roquette.findAngle(pos)
 
 pygame.quit()
