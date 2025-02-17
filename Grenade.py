@@ -60,30 +60,43 @@ class Grenade(object):
         return angle
 
     def move(self, terrain, delta_time, players):
-        if not self.exploded:  # Ne met à jour que si la grenade n'a pas explosé
-            self.launch_time += delta_time  # Incrémente le temps de lancement
-            if self.launch_time >= 2.5:  # Vérifie si X secondes se sont écoulées
-                self.explode(terrain, players)  # Appelle la méthode d'explosion
-                return  # Ne met pas à jour la position si elle a explosé
+        # Ne met à jour que si la grenade n'a pas explosé
+        if not self.exploded:
+            # Incrémente le temps de lancement de la grenade
+            self.launch_time += delta_time
 
-            if not self.on_ground:  # Ne mettez à jour que si la grenade n'est pas au sol
+            # Si plus de 2.5 secondes se sont écoulées, faire exploser la grenade
+            if self.launch_time >= 2.5:
+                self.explode(terrain, players)
+                return  # Ne met pas à jour la position si la grenade a explosé
+
+            # Ne met à jour la position que si la grenade n'est pas au sol
+            if not self.on_ground:
+                # Calculer la nouvelle position à l'aide de la méthode ballPath
                 self.x, new_y, self.velx, self.vely = Grenade.ballPath(self.x, self.y, self.velx, self.vely, 0.05)
 
+                # Vérifier la collision avec le terrain
                 terrain_x = int(self.x)
                 if 0 <= terrain_x < len(terrain):
                     terrain_height = terrain[terrain_x]
-                    if new_y >= terrain_height - self.radius:  # Collision avec le sol
-                        self.y = terrain_height - self.radius
-                        self.vely = -self.vely * self.restitution  # Inverser la vitesse et appliquer le facteur de restitution
-                        if abs(self.vely) < 1:  # Arrêt du rebond si vitesse trop faible
+
+                    # Si la grenade touche le sol, appliquer la collision
+                    if new_y >= terrain_height - self.radius:
+                        self.y = terrain_height - self.radius  # Positionner la grenade au sol
+                        self.vely = -self.vely * self.restitution  # Inverser la vitesse verticale et appliquer la restitution
+
+                        # Si la vitesse verticale devient trop faible, la grenade s'immobilise
+                        if abs(self.vely) < 1:
                             self.vely = 0
                             self.on_ground = True  # La grenade est maintenant au sol
                     else:
-                        self.y = new_y  # Met à jour la position Y
+                        self.y = new_y  # Mettre à jour la position Y si aucune collision
                 else:
-                    self.y = new_y  # Met à jour la position Y si hors des limites du terrain
+                    # Si la grenade est en dehors des limites du terrain, mettre à jour Y normalement
+                    self.y = new_y
             else:
-                self.y = terrain[int(self.x)] - self.radius  # Assurez-vous que la grenade reste au-dessus du terrain
+                # Si la grenade est déjà au sol, la position Y est ajustée pour rester au-dessus du terrain
+                self.y = terrain[int(self.x)] - self.radius
 
     def explode(self, terrain, players):
         """ Gère l'explosion de la grenade. """

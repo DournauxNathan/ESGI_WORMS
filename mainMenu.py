@@ -47,7 +47,6 @@ current_scene = "menu"
 
 # Liste des crédits
 developers = ["Nathan DOURNAUX", "Sarobidy RAHARIMANANA", "Adam NESSAIBIA", "Théo Breton"]
-assets_text = ["Assets utilisés :"]
 
 def draw_main_menu():
     screen.fill(WHITE)
@@ -62,10 +61,6 @@ def draw_credits():
         text_surface = font.render(text, True, BLACK)
         screen.blit(text_surface, (50, 50 + i * 40))
 
-    # Affichage des assets
-    for i, text in enumerate(assets_text):
-        text_surface = font.render(text, True, BLACK)
-        screen.blit(text_surface, (50, 300 + i * 30))
 
     # Bouton retour
     back_button = Button("Retour", 50, 500, 150, 50, action="menu")

@@ -236,7 +236,7 @@ class WormsGame:
 
                         print(
                             f" \n Grenade lancée, avec :\n - une puissance de {self.grenade_instance.power} \n - Un angle de {self.grenade_instance.angle} \n")
-                        print(f"- Velocité[{self.grenade_instance.velx}, {self.grenade_instance.vely}]")
+
                     current_character.has_shoot = True
 
                 elif event.key == pygame.K_SPACE:
@@ -261,12 +261,19 @@ class WormsGame:
 
         if current_character.health > 0:
             if self.inventory.current_weapon_index == 1 or self.inventory.current_weapon_index == 2:
-                # Dessiner une ligne en pointillés entre la roquette et le curseur
-                self.draw_dashed_line(current_character.x, current_character.y, pygame.mouse.get_pos())
+                # Dessiner la trajectoire
+                temp_roquette_instance = Roquette.Roquette(current_character.x, current_character.y, 5,(255, 0, 0))
+                mousePos = pygame.mouse.get_pos()
+                power = math.sqrt((mousePos[1] - temp_roquette_instance.y) ** 2 + (mousePos[0] - temp_roquette_instance.x) ** 2)
+                angle = temp_roquette_instance.findAngle(mousePos)
+                self.draw_trajectory(current_character.x, current_character.y, angle, power)
+
+                # Dessiner une ligne en pointillés entre le personnage et le curseur
+                #self.draw_dashed_line(current_character.x, current_character.y, mousePos)
 
         if self.roquette_instance:
             self.roquette_instance.move(self.terrain, self.players)  # Passez les joueurs
-            self.roquette_instance.draw(self.screen)
+            self.roquette_instance.draw(self.screen)  # Dessinez la roquette
             if current_character.has_shoot:
                 current_character.has_shoot = False
 
@@ -360,10 +367,32 @@ class WormsGame:
 
     # endregion
 
+    def draw_trajectory(self, start_x, start_y, angle, power, color=(255, 255, 255), steps=100, dash_length=5):
+        """ Dessine la trajectoire d'un projectile en pointillés. """
+        g = 9.81  # Accélération due à la gravité
+        trajectory_points = []
+
+        for step in range(steps):
+            t = step * 0.1  # Intervalle de temps
+            x = start_x + power * math.cos(angle) * t
+            y = start_y - (power * math.sin(angle) * t - 0.5 * g * t ** 2)
+
+            # Vérifiez si le projectile est encore dans l'écran
+            if x < 0 or x > settings.WIDTH or y > settings.HEIGHT:
+                break
+
+            trajectory_points.append((x, y))
+
+        # Dessiner la trajectoire en pointillés
+        for i in range(0, len(trajectory_points) - 1, 2):  # Saut d'un point sur deux
+            if i + 1 < len(trajectory_points):
+                pygame.draw.line(self.screen, color, trajectory_points[i], trajectory_points[i + 1], 2)
+
     def restart_game(self):
         """ Relance le jeu dans une nouvelle fenêtre. """
         pygame.quit()  # Ferme l'ancienne fenêtre
         WormsGame().start()  # Crée une nouvelle instance et démarre le jeu
+
 
 if __name__ == "__main__":
     WormsGame().start()
