@@ -1,6 +1,8 @@
 import pygame
 import random
 import settings
+import terrain
+
 
 class Character:
     def __init__(self, x, y, color, player_number):
@@ -17,7 +19,7 @@ class Character:
         self.player_number = player_number  # Numéro du joueur (1, 2, etc.)
 
     def take_damage(self, damage):
-        """Inflige des dégâts au personnage."""
+        print(f"Character {self.player_number} takes {damage} damage!")  # Ajoutez cette ligne pour le débogage
         self.health -= damage  # Réduit la vie du personnage
         if self.health <= 0:
             self.health = 0  # Assure que la vie ne soit pas négative

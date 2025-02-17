@@ -187,15 +187,15 @@ class WormsGame:
                     elif self.inventory.current_weapon_index == 2: 
                         self.grenade_instance = Grenade.Grenade(current_character.x, current_character.y, 5, (255, 0, 0))
                         mousePos = pygame.mouse.get_pos()
-                        self.grenade_instance.power = math.sqrt((mousePos[1] - self.grenade_instance.y) ** 2 + (mousePos[0] - self.grenade_instance.x) ** 2)    
+                        self.grenade_instance.power = math.sqrt((mousePos[1] - self.grenade_instance.y) ** 2 + (mousePos[0] - self.grenade_instance.x) ** 2)
                         self.grenade_instance.angle = self.grenade_instance.findAngle(mousePos, self.grenade_instance.x, self.grenade_instance.y)
                         self.grenade_instance.velx = math.cos(self.grenade_instance.angle) *  self.grenade_instance.power
                         self.grenade_instance.vely = math.sin(self.grenade_instance.angle) *  self.grenade_instance.power
-                        
+
                         print(f" \n Grenade lancée, avec :\n - une puissance de {self.grenade_instance.power} \n - Un angle de {self.grenade_instance.angle} \n")
                         print(f"- Velocité[{self.grenade_instance.velx}, {self.grenade_instance.vely}]")
                     current_character.has_shoot = True
-                
+
                 elif event.key == pygame.K_SPACE:
                     current_character.jump()
                 elif event.key == pygame.K_TAB:
@@ -213,18 +213,18 @@ class WormsGame:
             # Dessiner une ligne en pointillés entre la roquette et le curseur
             self.draw_dashed_line(current_character.x, current_character.y, pygame.mouse.get_pos())
 
-        if not self.roquette_instance == None:
-            self.roquette_instance.move(self.terrain)
+        if self.roquette_instance:
+            self.roquette_instance.move(self.terrain, self.players)  # Passez les joueurs
             self.roquette_instance.draw(self.screen)
-            if current_character.has_shoot :
+            if current_character.has_shoot:
                 current_character.has_shoot = False
 
         if self.grenade_instance:
             delta_time = self.clock.tick(60) / 1000.0  # Temps écoulé depuis la dernière image
-            self.grenade_instance.move(self.terrain, delta_time)  # Mettez à jour la position de la grenade
+            self.grenade_instance.move(self.terrain, delta_time, self.players)  # Passez les joueurs
             self.grenade_instance.draw(self.screen)  # Dessinez la grenade
 
-            if current_character.has_shoot :
+            if current_character.has_shoot:
                 current_character.has_shoot = False
 
         self.manager.update(self.clock.tick(60) / 1000.0)

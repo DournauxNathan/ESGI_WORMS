@@ -62,8 +62,8 @@ class Roquette(object):
         elif pos[1] > sY and pos[0] > sX:
             angle = (math.pi * 2) - angle
         return angle
-    
-    def move(self, terrain):  
+
+    def move(self, terrain, players):
         if not self.on_ground:  # Ne mettez à jour que si la roquette n'est pas au sol
             self.time += 0.05
             po = self.ballPath(self.x, self.y, self.power, self.angle, self.time)
@@ -78,3 +78,28 @@ class Roquette(object):
                     self.y = terrain_height - self.radius
                     self.on_ground = True  # La roquette est maintenant au sol
                     terrain[:] = create_crater(terrain, terrain_x, 25)  # Mise à jour du terrain
+                    self.check_damage(players)  # Vérifie les dégâts
+                    self.reposition_characters(players, terrain)  # Repositionne les personnages
+
+    def reposition_characters(self, players, terrain):
+        """ Repositionne les personnages après une explosion. """
+        for player in players:
+            for character in player:
+                terrain_x = int(character.x)
+                if 0 <= terrain_x < len(terrain):
+                    terrain_height = terrain[terrain_x]
+                    # Vérifiez si le personnage est sous le terrain
+                    if character.y + character.radius > terrain_height:  # Si le bas du personnage est sous le terrain
+                        character.y = terrain_height - character.radius  # Repositionne le personnage au-dessus du terrain
+                        character.on_ground = True  # Le personnage est maintenant au sol
+                    else:
+                        character.on_ground = False  # Si le personnage n'est pas sous le terrain, il n'est pas au sol
+
+    def check_damage(self, players):
+        for player in players:
+            for character in player:
+                distance = math.hypot(character.x - self.x, character.y - self.y)
+                print(f"Distance to character: {distance}")  # Pour le débogage
+                if distance <= 20:  # Rayon d'explosion
+                    print(f"Character {character.player_number} takes damage!")  # Pour le débogage
+                    character.take_damage(5)  # Inflige 5 de dégâts

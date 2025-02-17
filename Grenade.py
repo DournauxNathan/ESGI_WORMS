@@ -58,22 +58,22 @@ class Grenade(object):
         except:
             angle = math.pi / 2
         return angle
-    
-    def move(self, terrain, delta_time):  
+
+    def move(self, terrain, delta_time, players):
         if not self.exploded:  # Ne met à jour que si la grenade n'a pas explosé
             self.launch_time += delta_time  # Incrémente le temps de lancement
             if self.launch_time >= 2.5:  # Vérifie si X secondes se sont écoulées
-                self.explode(terrain)  # Appelle la méthode d'explosion
+                self.explode(terrain, players)  # Appelle la méthode d'explosion
                 return  # Ne met pas à jour la position si elle a explosé
 
             if not self.on_ground:  # Ne mettez à jour que si la grenade n'est pas au sol
                 self.x, new_y, self.velx, self.vely = Grenade.ballPath(self.x, self.y, self.velx, self.vely, 0.05)
-                
-                terrain_x = int(self.x)  
-                if 0 <= terrain_x < len(terrain):  
-                    terrain_height = terrain[terrain_x]  
+
+                terrain_x = int(self.x)
+                if 0 <= terrain_x < len(terrain):
+                    terrain_height = terrain[terrain_x]
                     if new_y >= terrain_height - self.radius:  # Collision avec le sol
-                        self.y = terrain_height - self.radius  
+                        self.y = terrain_height - self.radius
                         self.vely = -self.vely * self.restitution  # Inverser la vitesse et appliquer le facteur de restitution
                         if abs(self.vely) < 1:  # Arrêt du rebond si vitesse trop faible
                             self.vely = 0
@@ -85,15 +85,40 @@ class Grenade(object):
             else:
                 self.y = terrain[int(self.x)] - self.radius  # Assurez-vous que la grenade reste au-dessus du terrain
 
-    def explode(self, terrain):
+    def explode(self, terrain, players):
         """ Gère l'explosion de la grenade. """
         self.exploded = True
-        # Vérifiez si la roquette touche le terrain
+        # Vérifiez si la grenade touche le terrain
         terrain_x = int(self.x)
         if 0 <= terrain_x < len(terrain):
             terrain_height = terrain[terrain_x]
             if self.y >= terrain_height - self.radius:  # Collision avec le sol
                 self.y = terrain_height - self.radius
-                self.on_ground = True  # La roquette est maintenant au sol
+                self.on_ground = True  # La grenade est maintenant au sol
                 terrain[:] = create_crater(terrain, terrain_x, 50)  # Mise à jour du terrain
+                self.check_damage(players)  # Vérifie les dégâts
+                self.reposition_characters(players, terrain)  # Repositionne les personnages
         print("BOOM! La grenade a explosé.")
+
+    def reposition_characters(self, players, terrain):
+        """ Repositionne les personnages après une explosion. """
+        for player in players:
+            for character in player:
+                terrain_x = int(character.x)
+                if 0 <= terrain_x < len(terrain):
+                    terrain_height = terrain[terrain_x]
+                    # Vérifiez si le personnage est sous le terrain
+                    if character.y + character.radius > terrain_height:  # Si le bas du personnage est sous le terrain
+                        character.y = terrain_height - character.radius  # Repositionne le personnage au-dessus du terrain
+                        character.on_ground = True  # Le personnage est maintenant au sol
+                    else:
+                        character.on_ground = False  # Si le personnage n'est pas sous le terrain, il n'est pas au sol
+
+    def check_damage(self, players):
+        for player in players:
+            for character in player:
+                distance = math.hypot(character.x - self.x, character.y - self.y)
+                print(f"Distance to character: {distance}")  # Pour le débogage
+                if distance <= 50:  # Rayon d'explosion
+                    print(f"Character {character.player_number} takes damage!")  # Pour le débogage
+                    character.take_damage(10)  # Inflige 5 de dégâts
