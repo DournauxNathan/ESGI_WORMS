@@ -66,7 +66,7 @@ class Grenade(object):
             self.launch_time += delta_time
 
             # Si plus de 2.5 secondes se sont écoulées, faire exploser la grenade
-            if self.launch_time >= 2.5:
+            if self.launch_time >= 3:
                 self.explode(terrain, players)
                 return  # Ne met pas à jour la position si la grenade a explosé
 
